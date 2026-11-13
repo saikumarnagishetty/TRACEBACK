@@ -31,8 +31,11 @@ app.config.update(
     SECRET_KEY=os.environ.get("SECRET_KEY", "dev-only-change-this-secret"),
     SQLALCHEMY_DATABASE_URI=os.environ.get(
         "DATABASE_URL", f"sqlite:///{BASE_DIR / 'instance' / 'traceback.db'}"
-    ).replace("postgres://", "postgresql://", 1),
+    ).replace("postgres://", "postgresql+psycopg://", 1),
     SQLALCHEMY_TRACK_MODIFICATIONS=False,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=os.environ.get("RENDER") == "true",
     MAX_CONTENT_LENGTH=4 * 1024 * 1024,
     UPLOAD_FOLDER=str(BASE_DIR / "uploads"),
 )
@@ -196,6 +199,12 @@ def inject_globals():
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@app.get("/healthz")
+def healthz():
+    """Lightweight health check for the hosting platform."""
+    return jsonify(status="ok"), 200
 
 
 @app.route("/")
@@ -751,11 +760,11 @@ with app.app_context():
         "course": "VARCHAR(100)",
         "subject": "VARCHAR(100)",
         "designation": "VARCHAR(100)",
-        "is_active": "BOOLEAN NOT NULL DEFAULT 1",
+        "is_active": "BOOLEAN NOT NULL DEFAULT TRUE",
         "mobile_number": "VARCHAR(20)",
-        "email_verified": "BOOLEAN NOT NULL DEFAULT 1",
+        "email_verified": "BOOLEAN NOT NULL DEFAULT TRUE",
         "verification_code_hash": "VARCHAR(255)",
-        "verification_expires_at": "DATETIME",
+        "verification_expires_at": "TIMESTAMP",
     }
     with db.engine.begin() as connection:
         for column_name, column_type in profile_columns.items():
