@@ -11,7 +11,7 @@
   <div class="hero-note"><span>✳</span> Built for students, by the campus community</div>
 </section>
 <section class="section" id="reports">
-  <div class="section-heading"><div><div class="eyebrow">THE COMMUNITY BOARD</div><h2>Recently reported</h2></div><span class="count-pill">{{ items|length }} open reports</span></div>
+  <div class="section-heading"><div><div class="eyebrow">THE COMMUNITY BOARD</div><h2>Recently reported</h2></div><span class="count-pill">{{ items.total }} open reports</span></div>
   <form class="filters" method="get" action="{{ url_for('index') }}">
     <input type="search" name="q" value="{{ q }}" placeholder="Search item, detail or location…">
     <select name="category"><option value="">All categories</option>{% for c in categories %}<option value="{{ c }}" {% if selected_category == c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select>
@@ -30,6 +30,13 @@
     </a>
     {% endfor %}
   </div>
+  {% if items.pages > 1 %}
+  <nav class="pagination" aria-label="Report pages">
+    {% if items.has_prev %}<a class="button secondary small" href="{{ url_for('index', page=items.prev_num, q=q, category=selected_category, type=selected_type) }}">← Newer</a>{% endif %}
+    <span>Page {{ items.page }} of {{ items.pages }}</span>
+    {% if items.has_next %}<a class="button secondary small" href="{{ url_for('index', page=items.next_num, q=q, category=selected_category, type=selected_type) }}">Older →</a>{% endif %}
+  </nav>
+  {% endif %}
   {% else %}
   <div class="empty-state"><div class="empty-icon">⌕</div><h3>No matching reports yet</h3><p>Try a different search, or be the first to add a report.</p>{% if current_user.is_authenticated %}<a class="button secondary" href="{{ url_for('new_item') }}">Post an item</a>{% endif %}</div>
   {% endif %}
