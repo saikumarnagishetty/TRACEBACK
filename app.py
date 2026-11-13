@@ -259,11 +259,13 @@ def inject_globals():
     unread_notifications = 0
     if current_user.is_authenticated:
         cached_at = session.get("_unread_count_at", 0)
-        if time.time() - cached_at >= 30 or "_unread_count" not in session:
+        if (time.time() - cached_at >= 30 or "_unread_count" not in session
+                or session.get("_unread_count_user_id") != current_user.id):
             unread_notifications = Notification.query.filter_by(
                 user_id=current_user.id, is_read=False
             ).count()
             session["_unread_count"] = unread_notifications
+            session["_unread_count_user_id"] = current_user.id
             session["_unread_count_at"] = time.time()
         else:
             unread_notifications = session.get("_unread_count", 0)
