@@ -28,7 +28,14 @@ CATEGORIES = [
     "Clothing", "Keys", "Accessories", "Other"
 ]
 
-app = Flask(__name__, instance_relative_config=True)
+IS_VERCEL = os.environ.get("VERCEL") == "1"
+RUNTIME_DIR = Path("/tmp/traceback") if IS_VERCEL else BASE_DIR
+
+app = Flask(
+    __name__,
+    instance_path=str(RUNTIME_DIR / "instance"),
+    instance_relative_config=True,
+)
 app.config.update(
     SECRET_KEY=os.environ.get("SECRET_KEY", "dev-only-change-this-secret"),
     SQLALCHEMY_DATABASE_URI=os.environ.get(
@@ -41,7 +48,7 @@ app.config.update(
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=os.environ.get("RENDER") == "true",
     MAX_CONTENT_LENGTH=4 * 1024 * 1024,
-    UPLOAD_FOLDER=str(BASE_DIR / "uploads"),
+    UPLOAD_FOLDER=str(RUNTIME_DIR / "uploads"),
 )
 Path(app.instance_path).mkdir(parents=True, exist_ok=True)
 Path(app.config["UPLOAD_FOLDER"]).mkdir(parents=True, exist_ok=True)
