@@ -17,7 +17,7 @@ from wtforms import (
     BooleanField, PasswordField, SelectField, StringField, SubmitField,
     TextAreaField
 )
-from wtforms.validators import DataRequired, Email, Length, EqualTo, Optional
+from wtforms.validators import DataRequired, Email, Length, EqualTo, Optional, Regexp
 
 BASE_DIR = Path(__file__).resolve().parent
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
@@ -99,6 +99,7 @@ class Claim(db.Model):
 class RegisterForm(FlaskForm):
     name = StringField("Full name", validators=[DataRequired(), Length(min=2, max=80)])
     email = StringField("College email", validators=[DataRequired(), Email(), Length(max=120)])
+    mobile_number = StringField("Mobile number", validators=[DataRequired(), Regexp(r"^\\+?[0-9]{10,15}$", message="Enter a valid mobile number with 10–15 digits (country code optional).")])
     role = SelectField("I am a", choices=[("student", "Student"), ("faculty", "Faculty"), ("staff", "Non-teaching staff")], validators=[DataRequired()])
     enrollment_number = StringField("Enrollment number", validators=[Optional(), Length(max=40)])
     semester = SelectField("Semester", choices=[("", "Select semester")] + [(str(i), f"Semester {i}") for i in range(1, 13)], validators=[Optional()])
@@ -193,7 +194,7 @@ def register():
                 for error in role_errors: flash(error, "error")
                 return render_template("auth.html", form=form, mode="register")
             user = User(
-                name=form.name.data.strip(), email=email, role=role,
+                name=form.name.data.strip(), email=email, mobile_number=form.mobile_number.data.strip(), role=role,
                 enrollment_number=(form.enrollment_number.data or "").strip() or None if role == "student" else None,
                 semester=form.semester.data if role == "student" else None,
                 course=(form.course.data or "").strip() or None if role == "student" else None,
@@ -535,6 +536,7 @@ with app.app_context():
         "subject": "VARCHAR(100)",
         "designation": "VARCHAR(100)",
         "is_active": "BOOLEAN NOT NULL DEFAULT 1",
+        "mobile_number": "VARCHAR(20)",
     }
     with db.engine.begin() as connection:
         for column_name, column_type in profile_columns.items():
