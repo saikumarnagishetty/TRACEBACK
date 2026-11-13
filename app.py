@@ -100,7 +100,7 @@ class Claim(db.Model):
 class RegisterForm(FlaskForm):
     name = StringField("Full name", validators=[DataRequired(), Length(min=2, max=80)])
     email = StringField("College email", validators=[DataRequired(), Email(), Length(max=120)])
-    mobile_number = StringField("Mobile number", validators=[DataRequired(), Regexp(r"^\\+?[0-9]{10,15}$", message="Enter a valid mobile number with 10–15 digits (country code optional).")])
+    mobile_number = StringField("Mobile number", validators=[DataRequired(), Regexp(r"^\+?[0-9]{10,15}$", message="Enter a valid mobile number with 10–15 digits (country code optional).")])
     role = SelectField("I am a", choices=[("student", "Student"), ("faculty", "Faculty"), ("staff", "Non-teaching staff")], validators=[DataRequired()])
     enrollment_number = StringField("Enrollment number", validators=[Optional(), Length(max=40)])
     semester = SelectField("Semester", choices=[("", "Select semester")] + [(str(i), f"Semester {i}") for i in range(1, 13)], validators=[Optional()])
