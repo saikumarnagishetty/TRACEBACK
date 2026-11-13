@@ -241,3 +241,105 @@ body{background:transparent;position:relative}
 
 /* Lightweight report pagination */
 .pagination{display:flex;align-items:center;justify-content:center;gap:16px;margin:28px 0 8px;color:var(--muted);font-size:12px}
+
+
+/* Responsive layout and touch-friendly navigation */
+.mobile-nav-toggle{display:none}
+img,video,iframe{max-width:100%}
+.container,.section,.panel,.item-card,.detail-main,.detail-aside{min-width:0}
+.admin-table-wrap{-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.admin-table{white-space:normal}
+button,.button,.admin-action{touch-action:manipulation}
+input,select,textarea,button{font:inherit}
+input,select,textarea{max-width:100%}
+@media(max-width:760px){
+  .site-header{
+    min-height:68px;height:auto;padding:12px 18px;
+    display:flex;align-items:center;flex-wrap:wrap;gap:10px;
+  }
+  .brand{min-width:0;font-size:14px}
+  .campus-logo{width:36px;height:36px}
+  .mobile-nav-toggle{
+    display:flex;flex-direction:column;justify-content:center;gap:5px;
+    width:42px;height:42px;margin-left:auto;padding:10px;
+    border:1px solid rgba(226,241,207,.35);border-radius:9px;
+    background:rgba(230,242,214,.1);cursor:pointer;
+  }
+  .mobile-nav-toggle span{display:block;width:20px;height:2px;border-radius:2px;background:#f1f6e9}
+  .site-header nav{
+    display:none;width:100%;flex:0 0 100%;margin:4px 0 2px;
+    padding:10px 0 2px;border-top:1px solid rgba(226,241,207,.2);
+    align-items:stretch;flex-direction:column;gap:4px;
+  }
+  .site-header nav.is-open{display:flex}
+  .site-header nav a,.site-header nav .nav-link{
+    display:flex;width:100%;min-height:44px;align-items:center;
+    padding:11px 13px;font-size:14px;text-align:left;
+  }
+  .site-header nav .inline-form{width:100%}
+  .site-header nav .inline-form .nav-link{justify-content:flex-start}
+  .site-header nav .nav-cta{justify-content:center;margin-top:4px}
+  .container{padding-left:18px;padding-right:18px}
+  .hero{width:100%;margin:22px 0 30px;padding:54px 26px}
+  .section{padding:22px 17px;margin-bottom:30px}
+  .item-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .item-card-body{padding:13px}
+  .item-card h3{font-size:17px;overflow-wrap:anywhere}
+  .item-card p{min-height:0}
+  .filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .filters input{grid-column:1/-1}
+  .page-heading{padding:42px 0 22px}
+  .page-heading h1{font-size:clamp(32px,7vw,44px);overflow-wrap:anywhere}
+  .stats-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .detail-layout{grid-template-columns:minmax(0,1fr);gap:20px}
+  .detail-aside{position:static;width:100%}
+  .detail-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .form-shell{width:100%;max-width:650px;margin:42px auto 65px}
+  .chat-panel{width:100%;padding:16px}
+  .chat-messages{max-height:50vh}
+  .admin-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .admin-section{padding:18px 12px}
+  .site-footer{padding:20px 18px;flex-wrap:wrap}
+}
+@media(max-width:480px){
+  .container{padding-left:14px;padding-right:14px}
+  .hero{padding:42px 19px;margin-top:16px}
+  .hero h1{font-size:clamp(34px,10vw,43px)}
+  .hero-copy{font-size:14px;line-height:1.7}
+  .hero-actions{display:grid;grid-template-columns:1fr}
+  .hero-actions .button{width:100%;min-height:44px}
+  .item-grid{grid-template-columns:minmax(0,1fr)}
+  .item-visual{height:210px}
+  .filters{grid-template-columns:minmax(0,1fr)}
+  .filters input{grid-column:auto}
+  .section-heading{align-items:flex-start;gap:10px;flex-wrap:wrap}
+  .section-heading h2{font-size:23px}
+  .count-pill{white-space:nowrap}
+  .form-row,.detail-facts,.profile-details{grid-template-columns:minmax(0,1fr)}
+  .panel{padding:16px}
+  .form-shell h1{font-size:34px}
+  .stats-row,.admin-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .stat-card{padding:12px;min-width:0}
+  .stat-card strong{font-size:23px}
+  .stat-card span{font-size:10px;overflow-wrap:anywhere}
+  .detail-image{height:220px}
+  .detail-meta{flex-wrap:wrap;gap:7px}
+  .detail-main h1{font-size:30px;overflow-wrap:anywhere}
+  .claim-head,.notification-row{align-items:flex-start;flex-wrap:wrap}
+  .review-actions,.admin-actions{flex-wrap:wrap}
+  .chat-bubble{max-width:90%}
+  .chat-compose button{width:100%;min-height:44px}
+  .pagination{flex-wrap:wrap}
+  .site-footer{flex-direction:column;gap:6px}
+}
+@media(max-width:360px){
+  .site-header{padding-left:12px;padding-right:12px}
+  .brand{font-size:12px;gap:8px}
+  .campus-logo{width:32px;height:32px}
+  .hero{padding-left:16px;padding-right:16px}
+  .section{padding-left:13px;padding-right:13px}
+  .detail-facts{grid-template-columns:minmax(0,1fr)}
+}
+@media(prefers-reduced-motion:reduce){
+  .mobile-nav-toggle,.site-header nav{transition:none!important}
+}
