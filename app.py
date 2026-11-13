@@ -664,23 +664,49 @@ def reset_admin_password_command(email):
 def admin():
     if not current_user.is_admin:
         abort(403)
+
+    # Keep the admin page responsive: load only one page from each section.
+    users = User.query.order_by(User.created_at.desc()).paginate(
+        page=max(request.args.get("users_page", 1, type=int), 1),
+        per_page=10,
+        error_out=False,
+    )
+    items = Item.query.options(joinedload(Item.author)).order_by(
+        Item.created_at.desc()
+    ).paginate(
+        page=max(request.args.get("items_page", 1, type=int), 1),
+        per_page=10,
+        error_out=False,
+    )
+    claims = Claim.query.options(
+        joinedload(Claim.claimant),
+        joinedload(Claim.item).joinedload(Item.author),
+    ).order_by(Claim.created_at.desc()).paginate(
+        page=max(request.args.get("claims_page", 1, type=int), 1),
+        per_page=10,
+        error_out=False,
+    )
+    support_tickets = SupportTicket.query.options(
+        joinedload(SupportTicket.user),
+        selectinload(SupportTicket.messages),
+    ).order_by(SupportTicket.created_at.desc()).paginate(
+        page=max(request.args.get("support_page", 1, type=int), 1),
+        per_page=10,
+        error_out=False,
+    )
+
     return render_template(
         "admin.html",
-        users=User.query.order_by(User.created_at.desc()).all(),
-        items=Item.query.options(joinedload(Item.author)).order_by(Item.created_at.desc()).all(),
-        claims=Claim.query.options(
-            joinedload(Claim.claimant),
-            joinedload(Claim.item).joinedload(Item.author),
-        ).order_by(Claim.created_at.desc()).all(),
-        support_tickets=SupportTicket.query.options(
-            joinedload(SupportTicket.user),
-            selectinload(SupportTicket.messages),
-        ).order_by(SupportTicket.created_at.desc()).all(),
+        users=users,
+        items=items,
+        claims=claims,
+        support_tickets=support_tickets,
         pending=Claim.query.filter_by(status="pending").count(),
         active_users=User.query.filter_by(is_active=True).count(),
         inactive_users=User.query.filter_by(is_active=False).count(),
         open_items=Item.query.filter_by(status="open").count(),
-        resolved_items=Item.query.filter_by(status="resolved").count()
+        resolved_items=Item.query.filter_by(status="resolved").count(),
+        open_support_tickets=SupportTicket.query.filter_by(status="open").count(),
     )
 
 
