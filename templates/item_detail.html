@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title }} · TRACEBACK{% endblock %}
+{% block content %}
+<a class="back-link" href="{{ url_for('index') }}">← Back to reports</a>
+<div class="detail-layout"><article class="detail-main">
+<div class="detail-image">{% if item.image_filename %}<img src="{{ url_for('uploaded_file', filename=item.image_filename) }}" alt="{{ item.title }}">{% else %}<span>✳</span>{% endif %}</div>
+<div class="detail-meta"><span class="type-tag {{ item.report_type }}">{{ item.report_type }}</span><span>{{ item.category }}</span><span>·</span><span>{{ item.event_date.strftime('%d %b %Y') }}</span></div>
+<h1>{{ item.title }}</h1><p class="detail-description">{{ item.description }}</p>
+<div class="detail-facts"><div><small>LAST SEEN / FOUND</small><strong>⌖ {{ item.location }}</strong></div><div><small>REPORTED BY</small><strong>{{ item.author.name }}</strong></div><div><small>REPORT STATUS</small><strong>{{ item.status|title }}</strong></div></div>
+{% if current_user.is_authenticated and (current_user.id == item.user_id or current_user.is_admin) and item.claims %}
+<section class="claims-section"><h2>Claims to review</h2>{% for claim in item.claims %}<div class="claim-card"><div class="claim-head"><strong>{{ claim.claimant.name }}</strong><span class="status {{ claim.status }}">{{ claim.status }}</span></div><p>{{ claim.message }}</p><small>{{ claim.created_at.strftime('%d %b %Y, %I:%M %p') }}</small>{% if claim.status == 'pending' and item.status == 'open' %}<form method="post" action="{{ url_for('review_claim', claim_id=claim.id) }}" class="review-actions"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button name="decision" value="approved" class="button primary small">Approve claim</button><button name="decision" value="rejected" class="button secondary small">Reject</button></form>{% endif %}</div>{% endfor %}</section>
+{% endif %}
+</article>
+<aside class="detail-aside panel"><div class="eyebrow">NEXT STEP</div>{% if item.status != 'open' %}<h3>This report is resolved.</h3><p>This item has been marked as returned or closed.</p>{% elif current_user.is_authenticated and current_user.id == item.user_id %}<h3>Your report is live.</h3><p>We'll show ownership claims here when someone responds.</p>{% elif current_user.is_authenticated %}<h3>Think it's yours?</h3><p>Share details only the real owner would know. The report owner will review your claim.</p><form method="post" action="{{ url_for('create_claim', item_id=item.id) }}">{{ form.hidden_tag() }}<label>{{ form.message.label }}{{ form.message(rows=5, placeholder='Describe a unique mark, contents, serial number, or other proof…') }}</label><button class="button primary full" type="submit">Send ownership claim</button></form>{% else %}<h3>Recognise this item?</h3><p>Sign in to submit an ownership claim and provide proof to the report owner.</p><a class="button primary full" href="{{ url_for('login', next=url_for('item_detail', item_id=item.id)) }}">Sign in to claim</a>{% endif %}</aside></div>
+{% endblock %}
