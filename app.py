@@ -76,12 +76,10 @@ def start_request_timer():
     g.request_started_at = time.perf_counter()
 
 
-@event.listens_for(db.engine, "before_cursor_execute")
 def start_sql_timer(conn, cursor, statement, parameters, context, executemany):
     context._traceback_query_started = time.perf_counter()
 
 
-@event.listens_for(db.engine, "after_cursor_execute")
 def log_slow_sql(conn, cursor, statement, parameters, context, executemany):
     started = getattr(context, "_traceback_query_started", None)
     if started is not None:
@@ -90,6 +88,11 @@ def log_slow_sql(conn, cursor, statement, parameters, context, executemany):
             # Log the operation, not parameter values, to avoid exposing user data.
             operation = statement.lstrip().split(None, 1)[0].upper() if statement.strip() else "UNKNOWN"
             app.logger.warning("TRACEBACK slow_sql operation=%s duration_ms=%.1f", operation, duration_ms)
+
+
+with app.app_context():
+    event.listen(db.engine, "before_cursor_execute", start_sql_timer)
+    event.listen(db.engine, "after_cursor_execute", log_slow_sql)
 
 
 @app.after_request
