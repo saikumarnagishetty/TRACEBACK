@@ -93,6 +93,26 @@ class DirectMessage(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 
+class SupportTicket(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    subject = db.Column(db.String(120), nullable=False)
+    category = db.Column(db.String(30), nullable=False, default="general")
+    status = db.Column(db.String(12), nullable=False, default="open", index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    user = db.relationship("User")
+    messages = db.relationship("SupportMessage", backref="ticket", cascade="all, delete-orphan", lazy=True, order_by="SupportMessage.created_at.asc()")
+
+
+class SupportMessage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_id = db.Column(db.Integer, db.ForeignKey("support_ticket.id"), nullable=False, index=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    body = db.Column(db.String(3000), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    sender = db.relationship("User")
+
+
 def add_notification(user_id, message, link):
     db.session.add(Notification(user_id=user_id, message=message, link=link))
 
@@ -256,6 +276,69 @@ def login():
         flash("Incorrect email or password.", "error")
     return render_template("auth.html", form=form, mode="login")
 
+
+
+@app.route("/support", methods=["GET", "POST"])
+@login_required
+def support():
+    if request.method == "POST":
+        subject = request.form.get("subject", "").strip()
+        category = request.form.get("category", "general").strip()
+        body = request.form.get("body", "").strip()
+        allowed_categories = {"general", "account", "report", "claim", "technical", "suggestion"}
+        if not subject or len(subject) > 120 or not body or len(body) > 3000 or category not in allowed_categories:
+            flash("Please provide a subject and a message (up to 3000 characters).", "error")
+        else:
+            ticket = SupportTicket(user_id=current_user.id, subject=subject, category=category)
+            db.session.add(ticket)
+            db.session.flush()
+            db.session.add(SupportMessage(ticket_id=ticket.id, sender_id=current_user.id, body=body))
+            for admin_user in User.query.filter_by(is_admin=True, is_active=True).all():
+                add_notification(admin_user.id, f"New support query: {subject}", url_for("admin") + "#support")
+            db.session.commit()
+            flash("Your query has been sent to the TRACEBACK admin team.", "success")
+            return redirect(url_for("support_thread", ticket_id=ticket.id))
+    tickets = SupportTicket.query.filter_by(user_id=current_user.id).order_by(SupportTicket.created_at.desc()).all()
+    return render_template("support.html", tickets=tickets)
+
+
+@app.route("/support/<int:ticket_id>", methods=["GET", "POST"])
+@login_required
+def support_thread(ticket_id):
+    ticket = db.get_or_404(SupportTicket, ticket_id)
+    if ticket.user_id != current_user.id and not current_user.is_admin:
+        abort(403)
+    if request.method == "POST":
+        body = request.form.get("body", "").strip()
+        if ticket.status == "resolved":
+            flash("This query is resolved. Ask an administrator to reopen it if needed.", "info")
+        elif not body or len(body) > 3000:
+            flash("Message must contain 1–3000 characters.", "error")
+        else:
+            db.session.add(SupportMessage(ticket_id=ticket.id, sender_id=current_user.id, body=body))
+            if current_user.is_admin:
+                add_notification(ticket.user_id, f"Admin replied to your query: {ticket.subject}", url_for("support_thread", ticket_id=ticket.id))
+            else:
+                for admin_user in User.query.filter_by(is_admin=True, is_active=True).all():
+                    add_notification(admin_user.id, f"New reply on support query: {ticket.subject}", url_for("admin") + "#support")
+            db.session.commit()
+            return redirect(url_for("support_thread", ticket_id=ticket.id))
+    return render_template("support_thread.html", ticket=ticket)
+
+
+@app.post("/admin/support/<int:ticket_id>/status")
+@login_required
+def admin_set_support_status(ticket_id):
+    require_admin()
+    ticket = db.get_or_404(SupportTicket, ticket_id)
+    status = request.form.get("status")
+    if status not in {"open", "resolved"}:
+        abort(400)
+    ticket.status = status
+    add_notification(ticket.user_id, f"Your support query was marked {status}: {ticket.subject}", url_for("support_thread", ticket_id=ticket.id))
+    db.session.commit()
+    flash("Support query marked " + status + ".", "success")
+    return redirect(url_for("admin") + "#support")
 
 
 @app.route("/notifications")
@@ -515,6 +598,7 @@ def admin():
         users=User.query.order_by(User.created_at.desc()).all(),
         items=Item.query.order_by(Item.created_at.desc()).all(),
         claims=Claim.query.order_by(Claim.created_at.desc()).all(),
+        support_tickets=SupportTicket.query.order_by(SupportTicket.created_at.desc()).all(),
         pending=Claim.query.filter_by(status="pending").count(),
         active_users=User.query.filter_by(is_active=True).count(),
         inactive_users=User.query.filter_by(is_active=False).count(),
