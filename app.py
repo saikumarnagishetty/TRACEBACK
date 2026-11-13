@@ -12,6 +12,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import create_engine, or_, inspect, text
+from sqlalchemy.orm import joinedload, selectinload
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 from wtforms import (
@@ -564,8 +565,19 @@ def profile():
 @login_required
 def dashboard():
     my_items = Item.query.filter_by(user_id=current_user.id).order_by(Item.created_at.desc()).all()
-    claims_received = Claim.query.join(Item).filter(Item.user_id == current_user.id).order_by(Claim.created_at.desc()).all()
-    my_claims = Claim.query.filter_by(user_id=current_user.id).order_by(Claim.created_at.desc()).all()
+    claims_received = (
+        Claim.query.options(joinedload(Claim.claimant), joinedload(Claim.item))
+        .join(Item)
+        .filter(Item.user_id == current_user.id)
+        .order_by(Claim.created_at.desc())
+        .all()
+    )
+    my_claims = (
+        Claim.query.options(joinedload(Claim.item))
+        .filter_by(user_id=current_user.id)
+        .order_by(Claim.created_at.desc())
+        .all()
+    )
     return render_template("dashboard.html", my_items=my_items, claims_received=claims_received, my_claims=my_claims)
 
 
@@ -631,9 +643,15 @@ def admin():
     return render_template(
         "admin.html",
         users=User.query.order_by(User.created_at.desc()).all(),
-        items=Item.query.order_by(Item.created_at.desc()).all(),
-        claims=Claim.query.order_by(Claim.created_at.desc()).all(),
-        support_tickets=SupportTicket.query.order_by(SupportTicket.created_at.desc()).all(),
+        items=Item.query.options(joinedload(Item.author)).order_by(Item.created_at.desc()).all(),
+        claims=Claim.query.options(
+            joinedload(Claim.claimant),
+            joinedload(Claim.item).joinedload(Item.author),
+        ).order_by(Claim.created_at.desc()).all(),
+        support_tickets=SupportTicket.query.options(
+            joinedload(SupportTicket.user),
+            selectinload(SupportTicket.messages),
+        ).order_by(SupportTicket.created_at.desc()).all(),
         pending=Claim.query.filter_by(status="pending").count(),
         active_users=User.query.filter_by(is_active=True).count(),
         inactive_users=User.query.filter_by(is_active=False).count(),
