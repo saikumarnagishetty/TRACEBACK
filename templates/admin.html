@@ -17,7 +17,7 @@
   <div class="admin-table-wrap"><table class="admin-table">
     <thead><tr><th>Member</th><th>Role / profile</th><th>Account</th><th>Access</th><th>Actions</th></tr></thead>
     <tbody>{% for user in users %}<tr>
-      <td><strong>{{ user.name }}</strong><small>{{ user.email }}</small><small>Joined {{ user.created_at.strftime('%d %b %Y') }}</small></td>
+      <td><strong>{{ user.name }}</strong><small>{{ user.email }}</small><small>Mobile: {{ user.mobile_number or 'Not provided' }}</small><small>Joined {{ user.created_at.strftime('%d %b %Y') }}</small></td>
       <td>{{ user.role|title }}<small>{% if user.role == 'student' %}{{ user.enrollment_number or '—' }} · {{ user.course or '—' }} · Sem {{ user.semester or '—' }}{% elif user.role == 'faculty' %}{{ user.subject or '—' }}{% else %}{{ user.designation or '—' }}{% endif %}</small></td>
       <td><span class="status {{ 'approved' if user.is_active else 'rejected' }}">{{ 'Active' if user.is_active else 'Inactive' }}</span></td>
       <td><span class="status {{ 'resolved' if user.is_admin else 'pending' }}">{{ 'Administrator' if user.is_admin else 'Member' }}</span></td>
