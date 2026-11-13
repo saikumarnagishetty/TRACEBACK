@@ -147,3 +147,22 @@ body:before{
 @media(max-width:700px){
  body{background-attachment:scroll!important;background-size:cover!important;background-position:center center!important}
 }
+
+
+/* Administrator control centre */
+.admin-stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+.admin-section{scroll-margin-top:100px;margin-bottom:28px}
+.admin-table-wrap{width:100%;overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+.admin-table{width:100%;border-collapse:collapse;min-width:850px;text-align:left}
+.admin-table th{padding:13px 14px;background:#f3f5ee;color:#68715e;font-size:10px;letter-spacing:.09em;text-transform:uppercase}
+.admin-table td{padding:14px;border-top:1px solid var(--line);vertical-align:top;font-size:12px;max-width:290px}
+.admin-table td strong,.admin-table td small{display:block}
+.admin-table td small{color:var(--muted);font-size:10px;margin-top:4px;overflow-wrap:anywhere}
+.admin-actions{display:flex;flex-wrap:wrap;gap:6px;min-width:145px}
+.admin-actions form{margin:0}
+.admin-action{display:inline-flex;align-items:center;justify-content:center;padding:6px 9px;border:1px solid #dfe5d2;border-radius:6px;background:#f6f8f1;color:#4f6420;text-decoration:none;font:600 10px 'DM Sans',sans-serif;cursor:pointer;white-space:nowrap}
+.admin-action:hover{background:#eaf1dc}
+.admin-action.danger{border-color:#f0d7d0;background:#fff5f2;color:#a34e39}
+.admin-action.danger:hover{background:#fbe7e1}
+.claim-message{white-space:normal;overflow-wrap:anywhere;line-height:1.6;color:#596255}
+@media(max-width:800px){.admin-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-section{padding:20px 13px}}
