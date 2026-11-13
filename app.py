@@ -1,8 +1,5 @@
 import os
-import secrets
-import smtplib
-from email.message import EmailMessage
-from datetime import datetime, timedelta
+from datetime import datetime
 import click
 from pathlib import Path
 
@@ -99,28 +96,6 @@ class DirectMessage(db.Model):
 def add_notification(user_id, message, link):
     db.session.add(Notification(user_id=user_id, message=message, link=link))
 
-
-def send_verification_email(user, code):
-    host = os.environ.get("MAIL_SERVER")
-    sender = os.environ.get("MAIL_DEFAULT_SENDER") or os.environ.get("MAIL_USERNAME")
-    if not host or not sender:
-        raise RuntimeError("Email delivery is not configured.")
-    msg = EmailMessage()
-    msg["Subject"] = "Verify your TRACEBACK account"
-    msg["From"] = sender
-    msg["To"] = user.email
-    msg.set_content(f"Hello {user.name},\n\nYour TRACEBACK verification code is {code}. It expires in 10 minutes. Ignore this email if you did not register.")
-    port = int(os.environ.get("MAIL_PORT", "587"))
-    username, password = os.environ.get("MAIL_USERNAME"), os.environ.get("MAIL_PASSWORD")
-    if port == 465:
-        with smtplib.SMTP_SSL(host, port, timeout=20) as smtp:
-            if username and password: smtp.login(username, password)
-            smtp.send_message(msg)
-    else:
-        with smtplib.SMTP(host, port, timeout=20) as smtp:
-            smtp.starttls()
-            if username and password: smtp.login(username, password)
-            smtp.send_message(msg)
 
 
 class Item(db.Model):
@@ -253,21 +228,14 @@ def register():
                 course=(form.course.data or "").strip() or None if role == "student" else None,
                 subject=(form.subject.data or "").strip() or None if role == "faculty" else None,
                 designation=(form.designation.data or "").strip() or None if role == "staff" else None,
-                is_admin=False, email_verified=False
+                is_admin=False, email_verified=True
             )
             user.set_password(form.password.data)
-            code = f"{secrets.randbelow(1000000):06d}"
-            user.verification_code_hash = generate_password_hash(code)
-            user.verification_expires_at = datetime.utcnow() + timedelta(minutes=10)
             db.session.add(user)
             db.session.commit()
-            try:
-                send_verification_email(user, code)
-                flash("A 6-digit verification code was sent to your email.", "success")
-            except Exception:
-                app.logger.exception("Email delivery failed")
-                flash("Account created, but email delivery failed. Configure SMTP and resend the code.", "error")
-            return redirect(url_for("verify_email", user_id=user.id))
+            login_user(user)
+            flash("Your TRACEBACK account is ready. Welcome!", "success")
+            return redirect(url_for("index"))
     return render_template("auth.html", form=form, mode="register")
 
 
@@ -279,9 +247,6 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data.strip().lower()).first()
         if user and user.is_active and user.check_password(form.password.data):
-            if not user.email_verified:
-                flash("Please verify your email before signing in.", "error")
-                return redirect(url_for("verify_email", user_id=user.id))
             login_user(user)
             flash("You are signed in.", "success")
             next_url = request.args.get("next", "")
@@ -291,43 +256,6 @@ def login():
         flash("Incorrect email or password.", "error")
     return render_template("auth.html", form=form, mode="login")
 
-
-
-@app.route("/verify-email/<int:user_id>", methods=["GET", "POST"])
-def verify_email(user_id):
-    user = db.get_or_404(User, user_id)
-    if user.email_verified:
-        flash("Email already verified. Please sign in.", "info")
-        return redirect(url_for("login"))
-    if request.method == "POST":
-        code = request.form.get("code", "").strip()
-        if user.verification_code_hash and user.verification_expires_at and user.verification_expires_at >= datetime.utcnow() and check_password_hash(user.verification_code_hash, code):
-            user.email_verified = True
-            user.verification_code_hash = None
-            user.verification_expires_at = None
-            db.session.commit()
-            login_user(user)
-            flash("Email verified. Welcome to TRACEBACK!", "success")
-            return redirect(url_for("index"))
-        flash("Invalid or expired code. Request a new one.", "error")
-    return render_template("verify_email.html", user=user)
-
-
-@app.post("/verify-email/<int:user_id>/resend")
-def resend_verification(user_id):
-    user = db.get_or_404(User, user_id)
-    if user.email_verified: return redirect(url_for("login"))
-    code = f"{secrets.randbelow(1000000):06d}"
-    user.verification_code_hash = generate_password_hash(code)
-    user.verification_expires_at = datetime.utcnow() + timedelta(minutes=10)
-    db.session.commit()
-    try:
-        send_verification_email(user, code)
-        flash("A new verification code was sent.", "success")
-    except Exception:
-        app.logger.exception("Email resend failed")
-        flash("Email delivery is not configured yet.", "error")
-    return redirect(url_for("verify_email", user_id=user.id))
 
 
 @app.route("/notifications")
