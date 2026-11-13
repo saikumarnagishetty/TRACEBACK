@@ -44,9 +44,15 @@ app.config.update(
         "postgresql://", "postgresql+psycopg://", 1
     ),
     SQLALCHEMY_TRACK_MODIFICATIONS=False,
+    SQLALCHEMY_ENGINE_OPTIONS={
+        "pool_pre_ping": True,
+        "pool_recycle": 180,
+        "pool_size": 2,
+        "max_overflow": 1,
+    },
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
-    SESSION_COOKIE_SECURE=os.environ.get("RENDER") == "true",
+    SESSION_COOKIE_SECURE=IS_VERCEL or os.environ.get("RENDER") == "true",
     MAX_CONTENT_LENGTH=4 * 1024 * 1024,
     UPLOAD_FOLDER=str(RUNTIME_DIR / "uploads"),
 )
@@ -234,7 +240,10 @@ def index():
         items_query = items_query.filter_by(category=category)
     if report_type in {"lost", "found"}:
         items_query = items_query.filter_by(report_type=report_type)
-    items = items_query.order_by(Item.created_at.desc()).all()
+    page = request.args.get("page", 1, type=int)
+    items = items_query.order_by(Item.created_at.desc()).paginate(
+        page=max(page, 1), per_page=12, error_out=False
+    )
     return render_template("index.html", items=items, q=query, selected_category=category, selected_type=report_type)
 
 
