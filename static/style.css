@@ -34,3 +34,14 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;bac
 @media(max-width:800px){.hero{margin:25px 0 35px;padding:65px 30px}.section{padding:24px 18px}}
 @media(max-width:540px){body{background-attachment:scroll}.hero{padding:48px 22px;border-radius:16px}.section{border-radius:13px;margin-bottom:35px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{background-image:linear-gradient(180deg,rgba(8,19,17,.48),rgba(8,19,17,.2) 36rem,rgba(247,248,244,.96) 70rem),url('/static/images/college-campus.jpg');background-position:center top;background-size:cover;background-attachment:fixed}
+.hero{transform:translateY(var(--hero-shift,0));transition:transform .12s linear}
+.reveal{opacity:0;transform:translateY(28px) scale(.985);transition:opacity .75s ease,transform .75s cubic-bezier(.2,.75,.25,1)}
+.reveal.is-visible{opacity:1;transform:translateY(0) scale(1)}
+.site-header{transition:background .3s,box-shadow .3s}
+.site-header.is-scrolled{background:rgba(248,250,245,.96);box-shadow:0 8px 28px rgba(8,20,14,.14)}
+.campus-logo{width:42px;height:42px;object-fit:contain;border-radius:9px;background:#fff;padding:2px;box-shadow:0 5px 18px rgba(0,0,0,.12)}
+@media(max-width:700px){body{background-attachment:scroll}.hero{transform:none!important}}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
