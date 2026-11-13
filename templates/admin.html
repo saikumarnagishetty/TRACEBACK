@@ -73,7 +73,7 @@
     <thead><tr><th>Member</th><th>Query</th><th>Category</th><th>Created</th><th>Status / actions</th></tr></thead>
     <tbody>{% for ticket in support_tickets.items %}<tr>
       <td><strong>{{ ticket.user.name }}</strong><small>{{ ticket.user.email }}</small></td>
-      <td><a class="text-link" href="{{ url_for('support_thread', ticket_id=ticket.id) }}">{{ ticket.subject }}</a><small>{{ ticket.messages|length }} messages</small></td>
+      <td><a class="text-link" href="{{ url_for('support_thread', ticket_id=ticket.id) }}">{{ ticket.subject }}</a><small>{{ ticket.admin_message_count }} messages</small></td>
       <td>{{ ticket.category|title }}</td>
       <td>{{ ticket.created_at.strftime('%d %b %Y') }}</td>
       <td><span class="status {{ 'resolved' if ticket.status == 'resolved' else 'pending' }}">{{ ticket.status }}</span><div class="admin-actions" style="margin-top:8px"><a class="admin-action" href="{{ url_for('support_thread', ticket_id=ticket.id) }}">Open / reply</a><form method="post" action="{{ url_for('admin_set_support_status', ticket_id=ticket.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="status" value="{{ 'open' if ticket.status == 'resolved' else 'resolved' }}"><button class="admin-action" type="submit">{{ 'Reopen' if ticket.status == 'resolved' else 'Resolve' }}</button></form></div></td>
