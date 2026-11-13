@@ -3,10 +3,38 @@
 {% block content %}
 <section class="form-shell"><div class="eyebrow">WELCOME TO TRACEBACK</div><h1>{{ 'Join your campus.' if mode == 'register' else 'Welcome back.' }}</h1><p class="form-intro">{{ 'Create an account to post reports and help reunite lost belongings.' if mode == 'register' else 'Sign in to manage your reports and claims.' }}</p>
 <form method="post" class="panel form-panel">{{ form.hidden_tag() }}
-{% if mode == 'register' %}<label>{{ form.name.label }}{{ form.name(placeholder='Your full name') }}{% for e in form.name.errors %}<small class="field-error">{{ e }}</small>{% endfor %}</label>{% endif %}
+{% if mode == 'register' %}
+<label>{{ form.name.label }}{{ form.name(placeholder='Your full name') }}{% for e in form.name.errors %}<small class="field-error">{{ e }}</small>{% endfor %}</label>
+<label>{{ form.role.label }}{{ form.role(id='account-role') }}</label>
+<div id="student-fields" class="role-fields">
+<label>{{ form.enrollment_number.label }}{{ form.enrollment_number(placeholder='Your college enrollment number') }}</label>
+<label>{{ form.semester.label }}{{ form.semester() }}</label>
+<label>{{ form.course.label }}{{ form.course(placeholder='e.g. B.Tech Computer Science') }}</label>
+</div>
+<div id="faculty-fields" class="role-fields" hidden><label>{{ form.subject.label }}{{ form.subject(placeholder='e.g. Mathematics / Computer Science') }}</label></div>
+<div id="staff-fields" class="role-fields" hidden><label>{{ form.designation.label }}{{ form.designation(placeholder='e.g. Lab Assistant / Office Staff') }}</label></div>
+{% endif %}
 <label>{{ form.email.label }}{{ form.email(placeholder='you@college.edu') }}{% for e in form.email.errors %}<small class="field-error">{{ e }}</small>{% endfor %}</label>
 <label>{{ form.password.label }}{{ form.password(placeholder='At least 8 characters') }}{% for e in form.password.errors %}<small class="field-error">{{ e }}</small>{% endfor %}</label>
 {% if mode == 'register' %}<label>{{ form.confirm.label }}{{ form.confirm(placeholder='Enter password again') }}{% for e in form.confirm.errors %}<small class="field-error">{{ e }}</small>{% endfor %}</label>{% endif %}
 <button class="button primary full" type="submit">{{ 'Create account' if mode == 'register' else 'Sign in' }} <span>↗</span></button></form>
 <p class="form-switch">{% if mode == 'register' %}Already have an account? <a href="{{ url_for('login') }}">Sign in</a>{% else %}New to TRACEBACK? <a href="{{ url_for('register') }}">Create an account</a>{% endif %}</p></section>
+{% if mode == 'register' %}
+<script>
+(() => {
+  const role = document.getElementById('account-role');
+  const groups = {student: document.getElementById('student-fields'), faculty: document.getElementById('faculty-fields'), staff: document.getElementById('staff-fields')};
+  const update = () => Object.entries(groups).forEach(([key, group]) => {
+    const active = role.value === key;
+    group.hidden = !active;
+    group.querySelectorAll('input, select').forEach(field => {
+      field.required = active;
+      if (!active) field.value = '';
+    });
+  });
+  role.addEventListener('change', update);
+  update();
+})();
+</script>
+{% endif %}
 {% endblock %}
