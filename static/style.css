@@ -436,3 +436,32 @@ input,select,textarea{max-width:100%}
     background-color:#18291f!important;
   }
 }
+
+/* Performance pass: keep the requested campus video on desktop and mobile,
+   but remove expensive glass blur and decorative motion from content layers. */
+.video-background video{display:block!important}
+.video-background{contain:paint}
+.video-background::after{pointer-events:none}
+.site-header,.hero,.section,.panel,.item-card,.stat-card,.site-footer,
+.button.secondary,.video-background video{
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+}
+.hero{animation:none!important;transition:none!important}
+.hero::before{animation:none!important}
+.item-card{animation:none!important}
+.reveal,.reveal.is-visible{
+  opacity:1!important;
+  transform:none!important;
+  transition:none!important;
+}
+@media(max-width:760px){
+  .video-background video{display:block!important}
+  .hero,.section,.panel,.item-card,.stat-card,.site-header,.site-footer{
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .video-background video{display:none!important}
+}
