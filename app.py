@@ -454,7 +454,13 @@ def chat(claim_id):
             add_notification(recipient, f"New private message about {claim.item.title}.", url_for("chat", claim_id=claim.id))
             db.session.commit()
             return redirect(url_for("chat", claim_id=claim.id))
-    messages = DirectMessage.query.filter_by(claim_id=claim.id).order_by(DirectMessage.created_at.asc()).all()
+    # Render only the latest 100 messages; older history no longer grows page load indefinitely.
+    messages = list(reversed(
+        DirectMessage.query.filter_by(claim_id=claim.id)
+        .order_by(DirectMessage.id.desc())
+        .limit(100)
+        .all()
+    ))
     other_user = db.session.get(User, claim.item.user_id if current_user.id == claim.user_id else claim.user_id)
     return render_template("chat.html", claim=claim, messages=messages, other_user=other_user)
 
@@ -607,21 +613,41 @@ def profile():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    my_items = Item.query.filter_by(user_id=current_user.id).order_by(Item.created_at.desc()).all()
+    # Bound each dashboard section so accounts with long histories stay responsive.
+    my_items = Item.query.filter_by(user_id=current_user.id).order_by(
+        Item.created_at.desc()
+    ).paginate(
+        page=max(request.args.get("items_page", 1, type=int), 1),
+        per_page=8,
+        error_out=False,
+    )
     claims_received = (
         Claim.query.options(joinedload(Claim.claimant), joinedload(Claim.item))
         .join(Item)
         .filter(Item.user_id == current_user.id)
         .order_by(Claim.created_at.desc())
-        .all()
+        .paginate(
+            page=max(request.args.get("received_page", 1, type=int), 1),
+            per_page=8,
+            error_out=False,
+        )
     )
     my_claims = (
         Claim.query.options(joinedload(Claim.item))
         .filter_by(user_id=current_user.id)
         .order_by(Claim.created_at.desc())
-        .all()
+        .paginate(
+            page=max(request.args.get("claims_page", 1, type=int), 1),
+            per_page=8,
+            error_out=False,
+        )
     )
-    return render_template("dashboard.html", my_items=my_items, claims_received=claims_received, my_claims=my_claims)
+    return render_template(
+        "dashboard.html",
+        my_items=my_items,
+        claims_received=claims_received,
+        my_claims=my_claims,
+    )
 
 
 @app.cli.command("create-admin")
