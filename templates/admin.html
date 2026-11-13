@@ -1,7 +1,66 @@
 {% extends "base.html" %}
 {% block title %}Admin · TRACEBACK{% endblock %}
 {% block content %}
-<div class="page-heading"><div class="eyebrow">CAMPUS OPERATIONS</div><h1>Admin overview.</h1><p>Review activity and keep the community board useful.</p></div>
-<div class="stats-row"><div class="stat-card"><strong>{{ users|length }}</strong><span>Members</span></div><div class="stat-card"><strong>{{ items|length }}</strong><span>Reports</span></div><div class="stat-card"><strong>{{ pending }}</strong><span>Pending claims</span></div></div>
-<section class="section"><div class="section-heading"><h2>All reports</h2></div><div class="simple-list">{% for item in items %}<div class="admin-row"><span class="list-copy"><strong>{{ item.title }}</strong><small>{{ item.report_type }} · {{ item.author.name }} · {{ item.location }}</small></span><span class="status {{ item.status }}">{{ item.status }}</span><a class="text-link" href="{{ url_for('item_detail', item_id=item.id) }}">View</a>{% if item.status == 'open' %}<form method="post" action="{{ url_for('admin_close_item', item_id=item.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="text-link" type="submit">Close</button></form>{% endif %}</div>{% else %}<p class="muted">No reports yet.</p>{% endfor %}</div></section>
+<div class="page-heading"><div class="eyebrow">CAMPUS OPERATIONS</div><h1>Admin control centre.</h1><p>Manage members, reports and ownership claims from one place.</p></div>
+<div class="stats-row admin-stats">
+  <div class="stat-card"><strong>{{ users|length }}</strong><span>Total members</span></div>
+  <div class="stat-card"><strong>{{ active_users }}</strong><span>Active members</span></div>
+  <div class="stat-card"><strong>{{ inactive_users }}</strong><span>Deactivated members</span></div>
+  <div class="stat-card"><strong>{{ items|length }}</strong><span>Total reports</span></div>
+  <div class="stat-card"><strong>{{ open_items }}</strong><span>Open reports</span></div>
+  <div class="stat-card"><strong>{{ resolved_items }}</strong><span>Resolved reports</span></div>
+  <div class="stat-card"><strong>{{ pending }}</strong><span>Pending claims</span></div>
+</div>
+
+<section class="section admin-section" id="members">
+  <div class="section-heading"><div><div class="eyebrow">ACCOUNT CONTROL</div><h2>Manage members</h2></div><span class="count-pill">{{ users|length }} accounts</span></div>
+  <div class="admin-table-wrap"><table class="admin-table">
+    <thead><tr><th>Member</th><th>Role / profile</th><th>Account</th><th>Access</th><th>Actions</th></tr></thead>
+    <tbody>{% for user in users %}<tr>
+      <td><strong>{{ user.name }}</strong><small>{{ user.email }}</small><small>Joined {{ user.created_at.strftime('%d %b %Y') }}</small></td>
+      <td>{{ user.role|title }}<small>{% if user.role == 'student' %}{{ user.enrollment_number or '—' }} · {{ user.course or '—' }} · Sem {{ user.semester or '—' }}{% elif user.role == 'faculty' %}{{ user.subject or '—' }}{% else %}{{ user.designation or '—' }}{% endif %}</small></td>
+      <td><span class="status {{ 'approved' if user.is_active else 'rejected' }}">{{ 'Active' if user.is_active else 'Inactive' }}</span></td>
+      <td><span class="status {{ 'resolved' if user.is_admin else 'pending' }}">{{ 'Administrator' if user.is_admin else 'Member' }}</span></td>
+      <td><div class="admin-actions">
+        <form method="post" action="{{ url_for('admin_toggle_user', user_id=user.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="admin-action" type="submit">{{ 'Deactivate' if user.is_active else 'Activate' }}</button></form>
+        <form method="post" action="{{ url_for('admin_toggle_admin', user_id=user.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="admin-action" type="submit">{{ 'Revoke admin' if user.is_admin else 'Make admin' }}</button></form>
+        {% if user.id != current_user.id %}<form method="post" action="{{ url_for('admin_delete_user', user_id=user.id) }}" onsubmit="return confirm('Permanently delete this member and their reports and claims?')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="admin-action danger" type="submit">Delete</button></form>{% endif %}
+      </div></td>
+    </tr>{% else %}<tr><td colspan="5">No members yet.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+
+<section class="section admin-section" id="reports">
+  <div class="section-heading"><div><div class="eyebrow">CAMPUS BOARD</div><h2>Manage reports</h2></div><span class="count-pill">{{ items|length }} reports</span></div>
+  <div class="admin-table-wrap"><table class="admin-table">
+    <thead><tr><th>Report</th><th>Posted by</th><th>Type / category</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>{% for item in items %}<tr>
+      <td><strong>{{ item.title }}</strong><small>{{ item.location }} · {{ item.event_date.strftime('%d %b %Y') }}</small><small>{{ item.created_at.strftime('%d %b %Y') }}</small></td>
+      <td>{{ item.author.name }}<small>{{ item.author.email }}</small></td>
+      <td>{{ item.report_type|title }}<small>{{ item.category }}</small></td>
+      <td><span class="status {{ item.status }}">{{ item.status }}</span></td>
+      <td><div class="admin-actions"><a class="admin-action" href="{{ url_for('item_detail', item_id=item.id) }}">View</a>
+        <form method="post" action="{{ url_for('admin_set_item_status', item_id=item.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="status" value="{{ 'resolved' if item.status == 'open' else 'open' }}"><button class="admin-action" type="submit">{{ 'Close' if item.status == 'open' else 'Reopen' }}</button></form>
+        <form method="post" action="{{ url_for('admin_delete_item', item_id=item.id) }}" onsubmit="return confirm('Permanently delete this report and all its claims?')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="admin-action danger" type="submit">Delete</button></form>
+      </div></td>
+    </tr>{% else %}<tr><td colspan="5">No reports yet.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+
+<section class="section admin-section" id="claims">
+  <div class="section-heading"><div><div class="eyebrow">OWNERSHIP VERIFICATION</div><h2>Manage claims</h2></div><span class="count-pill">{{ pending }} pending</span></div>
+  <div class="admin-table-wrap"><table class="admin-table">
+    <thead><tr><th>Claimant</th><th>Report</th><th>Proof message</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>{% for claim in claims %}<tr>
+      <td><strong>{{ claim.claimant.name }}</strong><small>{{ claim.claimant.email }}</small></td>
+      <td><a class="text-link" href="{{ url_for('item_detail', item_id=claim.item_id) }}">{{ claim.item.title }}</a><small>Reported by {{ claim.item.author.name }}</small></td>
+      <td class="claim-message">{{ claim.message }}</td>
+      <td><span class="status {{ claim.status }}">{{ claim.status }}</span></td>
+      <td>{% if claim.status == 'pending' %}<div class="admin-actions">
+        <form method="post" action="{{ url_for('admin_review_claim', claim_id=claim.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="decision" value="approved"><button class="admin-action" type="submit">Approve</button></form>
+        <form method="post" action="{{ url_for('admin_review_claim', claim_id=claim.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="decision" value="rejected"><button class="admin-action danger" type="submit">Reject</button></form>
+      </div>{% else %}<span class="muted">Reviewed</span>{% endif %}</td>
+    </tr>{% else %}<tr><td colspan="5">No claims submitted yet.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
 {% endblock %}
