@@ -2,7 +2,7 @@
 {% block title %}Verify email · TRACEBACK{% endblock %}
 {% block content %}
 <section class="form-shell"><div class="eyebrow">ONE QUICK SECURITY STEP</div><h1>Verify your email.</h1><p class="form-intro">We sent a 6-digit code to <strong>{{ user.email }}</strong>. It expires in 10 minutes.</p>
-<form method="post" class="panel form-panel">{{ form.hidden_tag() if form is defined else '' }}<label>6-digit verification code<input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required placeholder="123456"></label><button class="button primary full" type="submit">Verify email</button></form>
-<form method="post" action="{{ url_for('resend_verification', user_id=user.id) }}" class="form-panel"><button class="button secondary full" type="submit">Resend code</button></form>
+<form method="post" class="panel form-panel"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label>6-digit verification code<input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required placeholder="123456"></label><button class="button primary full" type="submit">Verify email</button></form>
+<form method="post" action="{{ url_for('resend_verification', user_id=user.id) }}" class="form-panel"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button secondary full" type="submit">Resend code</button></form>
 </section>
 {% endblock %}
