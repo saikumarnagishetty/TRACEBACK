@@ -5,7 +5,7 @@
 
 /* TRACEBACK campus edition: cinematic campus backdrop + restrained motion */
 :root{--ink:#18221f;--paper:#f7f8f4;--green:#d8ef9b}
-body{background:linear-gradient(180deg,rgba(9,20,17,.56),rgba(9,20,17,.35) 34rem,rgba(247,248,244,.96) 72rem),url("/static/images/college-campus.jpg") center 35%/cover fixed no-repeat,var(--paper);background-color:var(--paper)}
+body{background:linear-gradient(180deg,rgba(9,20,17,.56),rgba(9,20,17,.35) 34rem,rgba(247,248,244,.96) 72rem),url("/static/images/1748685721645.webp") center 35%/cover fixed no-repeat,var(--paper);background-color:var(--paper)}
 body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background:radial-gradient(ellipse at 15% 12%,rgba(221,240,175,.18),transparent 36%),radial-gradient(ellipse at 85% 30%,rgba(184,210,184,.14),transparent 32%)}
 .site-header{background:rgba(250,252,247,.88);border-bottom-color:rgba(255,255,255,.32);box-shadow:0 8px 30px rgba(10,25,20,.08)}
 .brand-mark{box-shadow:0 5px 16px rgba(157,189,37,.22)}
@@ -36,7 +36,7 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;bac
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
 
 html{scroll-behavior:smooth;scroll-padding-top:90px}
-body{background-image:linear-gradient(180deg,rgba(8,19,17,.48),rgba(8,19,17,.2) 36rem,rgba(247,248,244,.96) 70rem),url('/static/images/college-campus.jpg');background-position:center top;background-size:cover;background-attachment:fixed}
+body{background-image:linear-gradient(180deg,rgba(8,19,17,.48),rgba(8,19,17,.2) 36rem,rgba(247,248,244,.96) 70rem),url('/static/images/1748685721645.webp');background-position:center top;background-size:cover;background-attachment:fixed}
 .hero{transform:translateY(var(--hero-shift,0));transition:transform .12s linear}
 .reveal{opacity:0;transform:translateY(28px) scale(.985);transition:opacity .75s ease,transform .75s cubic-bezier(.2,.75,.25,1)}
 .reveal.is-visible{opacity:1;transform:translateY(0) scale(1)}
