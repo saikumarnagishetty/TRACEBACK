@@ -2,34 +2,20 @@
 
 A minimal college lost-and-found management web application built with Python, Flask, and SQLite.
 
-The repository was inspected before implementation. It was empty (no files, commits, or branches), so this is a clean initial implementation.
-
 ## Features
 
-- Student registration and login
+- Student, faculty, and staff registration with mobile number and profile details
+- Direct sign-in after registration; no email OTP or SMTP setup required
 - Post lost and found item reports
 - Browse, search, and filter reports
 - Submit ownership claims with proof details
 - Report owners can review and resolve claims
 - Admin control centre: manage members, account access, reports, and ownership claims
 - Admin can activate/deactivate accounts, grant/revoke administrator access, close/reopen reports, and review/delete content
-- Existing database files are upgraded safely with the account-active field
-- SQLite database initialized automatically
-
-- Email OTP verification for any valid email address (10-minute expiry and resend)
 - In-app notifications for new claims, claim decisions, and private messages
 - Private claim chat restricted to the report owner and claimant
-
-## Email delivery configuration
-
-Set these environment variables in your deployment (never commit credentials):
-
-- `MAIL_SERVER` — SMTP host
-- `MAIL_PORT` — usually 587 (STARTTLS) or 465 (SSL)
-- `MAIL_USERNAME` and `MAIL_PASSWORD` — SMTP credentials
-- `MAIL_DEFAULT_SENDER` — verified sender email address
-
-Without SMTP settings, registration records a pending account but cannot deliver the verification code. Configure SMTP, then use **Resend code** on the verification page.
+- Existing database files are upgraded safely without deleting user data
+- SQLite database initialized automatically
 
 ## Run locally
 
