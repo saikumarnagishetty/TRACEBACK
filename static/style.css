@@ -45,3 +45,71 @@ body{background-image:linear-gradient(180deg,rgba(8,19,17,.48),rgba(8,19,17,.2) 
 .campus-logo{width:42px;height:42px;object-fit:contain;border-radius:9px;background:#fff;padding:2px;box-shadow:0 5px 18px rgba(0,0,0,.12)}
 @media(max-width:700px){body{background-attachment:scroll}.hero{transform:none!important}}
 @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+
+
+/* Final visual refinement: preserve the campus photo's native dimensions */
+html,body{min-height:100%}
+body{
+  background-color:#17231e!important;
+  background-image:url("/static/images/1748685721645.webp")!important;
+  background-position:center top!important;
+  background-size:auto!important;
+  background-repeat:no-repeat!important;
+  background-attachment:fixed!important;
+}
+body:before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background:linear-gradient(180deg,rgba(10,25,20,.16) 0%,rgba(10,25,20,.08) 48%,rgba(10,25,20,.42) 100%);
+}
+.site-header{
+  position:sticky;
+  top:0;
+  z-index:50;
+  min-height:76px;
+  background:rgba(18,38,31,.88)!important;
+  color:#f5f7ee;
+  border-bottom:1px solid rgba(222,239,185,.2)!important;
+  box-shadow:0 8px 28px rgba(4,14,10,.22)!important;
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+.brand{color:#f5f7ee!important;gap:12px}
+.brand:hover{color:#d9ef9e!important}
+.campus-logo{width:42px;height:42px;object-fit:contain;border-radius:9px;background:#fff;padding:2px;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.site-header nav a,.site-header nav .nav-link{
+  color:rgba(247,250,239,.86)!important;
+  border-radius:8px;
+  padding:10px 13px;
+}
+.site-header nav a:hover,.site-header nav .nav-link:hover{
+  color:#e0f3a7!important;
+  background:rgba(219,241,161,.12);
+}
+.site-header nav .nav-cta{
+  color:#1b2a20!important;
+  background:#d9ef9e!important;
+  border:1px solid rgba(236,248,207,.65);
+}
+.site-header nav .nav-cta:hover{background:#e8f6c3!important;transform:translateY(-1px)}
+.site-header.is-scrolled{background:rgba(13,29,24,.96)!important}
+.hero{
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  background:linear-gradient(115deg,rgba(8,22,18,.86),rgba(14,31,25,.72))!important;
+  border-color:rgba(235,245,219,.25);
+}
+.section{
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  background:rgba(249,250,246,.97)!important;
+}
+.site-footer{background:rgba(18,38,31,.9)!important;color:rgba(247,250,239,.72)!important}
+.site-footer span:first-child{color:#d9ef9e!important}
+@media(max-width:700px){
+ body{background-attachment:scroll!important;background-position:center top!important;background-size:auto!important}
+ .site-header{background:rgba(18,38,31,.95)!important}
+}
