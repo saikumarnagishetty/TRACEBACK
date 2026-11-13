@@ -14,7 +14,8 @@
 <div class="video-background" aria-hidden="true"><video autoplay muted loop playsinline preload="none" poster="{{ url_for('static', filename='images/1748685721645.webp') }}"><source data-src="{{ url_for('static', filename='videos/video.mp4') }}" type="video/mp4"></video></div>
 <header class="site-header">
   <a class="brand" href="{{ url_for('index') }}"><img class="campus-logo" src="{{ url_for('static', filename='images/amity-university-rajasthan-jaipur-logo.webp') }}" alt="Amity University Jaipur logo"> TRACEBACK</a>
-  <nav>
+  <button class="mobile-nav-toggle" type="button" aria-label="Open navigation" aria-controls="primary-navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+  <nav id="primary-navigation">
     <a href="{{ url_for('index') }}#reports">Browse</a>
     {% if current_user.is_authenticated %}
       <a href="{{ url_for('dashboard') }}">My dashboard</a>
@@ -52,6 +53,20 @@
  if(source){
    if("requestIdleCallback" in window)requestIdleCallback(loadVideo,{timeout:3500});
    else window.addEventListener("load",()=>setTimeout(loadVideo,1200),{once:true});
+ }
+ const navToggle=document.querySelector(".mobile-nav-toggle");
+ const nav=document.getElementById("primary-navigation");
+ if(navToggle&&nav){
+   const closeMenu=()=>{nav.classList.remove("is-open");navToggle.setAttribute("aria-expanded","false");navToggle.setAttribute("aria-label","Open navigation");};
+   navToggle.addEventListener("click",()=>{
+     const open=navToggle.getAttribute("aria-expanded")!=="true";
+     nav.classList.toggle("is-open",open);
+     navToggle.setAttribute("aria-expanded",String(open));
+     navToggle.setAttribute("aria-label",open?"Close navigation":"Open navigation");
+   });
+   nav.querySelectorAll("a").forEach(link=>link.addEventListener("click",closeMenu));
+   document.addEventListener("keydown",event=>{if(event.key==="Escape")closeMenu();});
+   window.addEventListener("resize",()=>{if(window.innerWidth>760)closeMenu();});
  }
  const header=document.querySelector(".site-header"), hero=document.querySelector(".hero");
  const targets=document.querySelectorAll(".section,.page-heading,.stats-row,.detail-layout,.form-shell,.error-state");
