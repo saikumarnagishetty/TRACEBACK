@@ -14,6 +14,7 @@ A minimal college lost-and-found management web application built with Python, F
 - Admin can activate/deactivate accounts, grant/revoke administrator access, close/reopen reports, and review/delete content
 - In-app notifications for new claims, claim decisions, and private messages
 - Private claim chat restricted to the report owner and claimant
+- Private Contact Admin help desk with support tickets, threaded replies, notifications, and admin resolution controls
 - Existing database files are upgraded safely without deleting user data
 - SQLite database initialized automatically
 
