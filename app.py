@@ -52,6 +52,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
     role = db.Column(db.String(20), nullable=False, default="student")
     enrollment_number = db.Column(db.String(40))
     semester = db.Column(db.String(20))
@@ -215,7 +216,7 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data.strip().lower()).first()
-        if user and user.check_password(form.password.data):
+        if user and user.is_active and user.check_password(form.password.data):
             login_user(user)
             flash("You are signed in.", "success")
             next_url = request.args.get("next", "")
@@ -435,6 +436,7 @@ with app.app_context():
         "course": "VARCHAR(100)",
         "subject": "VARCHAR(100)",
         "designation": "VARCHAR(100)",
+        "is_active": "BOOLEAN NOT NULL DEFAULT 1",
     }
     with db.engine.begin() as connection:
         for column_name, column_type in profile_columns.items():
