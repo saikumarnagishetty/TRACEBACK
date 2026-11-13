@@ -12,7 +12,7 @@ from flask_login import (
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
-from sqlalchemy import create_engine, or_, inspect, text
+from sqlalchemy import create_engine, func, or_, inspect, text
 from sqlalchemy.orm import joinedload, selectinload
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
@@ -695,18 +695,28 @@ def admin():
         error_out=False,
     )
 
+    # Fetch all dashboard summary counters in one database round trip.
+    stats = db.session.query(
+        db.session.query(func.count(User.id)).filter(User.is_active.is_(True)).scalar_subquery(),
+        db.session.query(func.count(User.id)).filter(User.is_active.is_(False)).scalar_subquery(),
+        db.session.query(func.count(Item.id)).filter(Item.status == "open").scalar_subquery(),
+        db.session.query(func.count(Item.id)).filter(Item.status == "resolved").scalar_subquery(),
+        db.session.query(func.count(Claim.id)).filter(Claim.status == "pending").scalar_subquery(),
+        db.session.query(func.count(SupportTicket.id)).filter(SupportTicket.status == "open").scalar_subquery(),
+    ).one()
+
     return render_template(
         "admin.html",
         users=users,
         items=items,
         claims=claims,
         support_tickets=support_tickets,
-        pending=Claim.query.filter_by(status="pending").count(),
-        active_users=User.query.filter_by(is_active=True).count(),
-        inactive_users=User.query.filter_by(is_active=False).count(),
-        open_items=Item.query.filter_by(status="open").count(),
-        resolved_items=Item.query.filter_by(status="resolved").count(),
-        open_support_tickets=SupportTicket.query.filter_by(status="open").count(),
+        active_users=stats[0],
+        inactive_users=stats[1],
+        open_items=stats[2],
+        resolved_items=stats[3],
+        pending=stats[4],
+        open_support_tickets=stats[5],
     )
 
 
