@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Contact Admin · TRACEBACK{% endblock %}
+{% block content %}
+<div class="page-heading"><div class="eyebrow">TRACEBACK HELP DESK</div><h1>How can we help?</h1><p>Send a private query to the campus admin team. Only you and administrators can view your conversation.</p></div>
+<div class="detail-layout">
+  <section class="panel">
+    <h2>Start a conversation</h2>
+    <form method="post" class="form-panel">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Subject<input name="subject" maxlength="120" required placeholder="e.g. Unable to access my account"></label>
+      <label>Query type<select name="category"><option value="general">General question</option><option value="account">Account / login issue</option><option value="report">Lost & found report</option><option value="claim">Claim issue</option><option value="technical">Technical problem</option><option value="suggestion">Suggestion / feedback</option></select></label>
+      <label>Message<textarea name="body" rows="5" maxlength="3000" required placeholder="Describe your question or issue…"></textarea></label>
+      <button class="button primary" type="submit">Send to Admin ↗</button>
+    </form>
+  </section>
+  <aside class="panel">
+    <h2>Your support queries</h2>
+    {% if tickets %}<div class="simple-list">{% for ticket in tickets %}<a href="{{ url_for('support_thread', ticket_id=ticket.id) }}"><span class="list-copy"><strong>{{ ticket.subject }}</strong><small>{{ ticket.category|title }} · {{ ticket.created_at.strftime('%d %b %Y') }}</small></span><span class="status {{ 'resolved' if ticket.status == 'resolved' else 'pending' }}">{{ ticket.status }}</span></a>{% endfor %}</div>{% else %}<p class="muted">You haven't contacted the admin team yet.</p>{% endif %}
+  </aside>
+</div>
+{% endblock %}
