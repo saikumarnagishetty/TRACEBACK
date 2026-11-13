@@ -387,20 +387,117 @@ def admin():
         "admin.html",
         users=User.query.order_by(User.created_at.desc()).all(),
         items=Item.query.order_by(Item.created_at.desc()).all(),
-        pending=Claim.query.filter_by(status="pending").count()
+        claims=Claim.query.order_by(Claim.created_at.desc()).all(),
+        pending=Claim.query.filter_by(status="pending").count(),
+        active_users=User.query.filter_by(is_active=True).count(),
+        inactive_users=User.query.filter_by(is_active=False).count(),
+        open_items=Item.query.filter_by(status="open").count(),
+        resolved_items=Item.query.filter_by(status="resolved").count()
     )
 
 
-@app.post("/admin/item/<int:item_id>/close")
-@login_required
-def admin_close_item(item_id):
-    if not current_user.is_admin:
+def require_admin():
+    if not current_user.is_authenticated or not current_user.is_admin:
         abort(403)
+
+
+@app.post("/admin/user/<int:user_id>/toggle-active")
+@login_required
+def admin_toggle_user(user_id):
+    require_admin()
+    user = db.get_or_404(User, user_id)
+    if user.id == current_user.id and user.is_active:
+        flash("You cannot deactivate your own account.", "error")
+    else:
+        user.is_active = not user.is_active
+        db.session.commit()
+        flash("Account " + ("activated" if user.is_active else "deactivated") + ".", "success")
+    return redirect(url_for("admin") + "#members")
+
+
+@app.post("/admin/user/<int:user_id>/toggle-admin")
+@login_required
+def admin_toggle_admin(user_id):
+    require_admin()
+    user = db.get_or_404(User, user_id)
+    if user.is_admin and User.query.filter_by(is_admin=True).count() <= 1:
+        flash("The last administrator cannot be removed.", "error")
+    elif user.id == current_user.id and user.is_admin:
+        flash("You cannot remove your own administrator access.", "error")
+    else:
+        user.is_admin = not user.is_admin
+        db.session.commit()
+        flash("Administrator access " + ("granted" if user.is_admin else "revoked") + ".", "success")
+    return redirect(url_for("admin") + "#members")
+
+
+@app.post("/admin/user/<int:user_id>/delete")
+@login_required
+def admin_delete_user(user_id):
+    require_admin()
+    user = db.get_or_404(User, user_id)
+    if user.id == current_user.id:
+        flash("You cannot delete your own account while signed in.", "error")
+    elif user.is_admin and User.query.filter_by(is_admin=True).count() <= 1:
+        flash("The last administrator cannot be deleted.", "error")
+    else:
+        owned_items = Item.query.filter_by(user_id=user.id).all()
+        for item in owned_items:
+            Claim.query.filter_by(item_id=item.id).delete(synchronize_session=False)
+            db.session.delete(item)
+        Claim.query.filter_by(user_id=user.id).delete(synchronize_session=False)
+        db.session.delete(user)
+        db.session.commit()
+        flash("Member and their reports/claims were deleted.", "success")
+    return redirect(url_for("admin") + "#members")
+
+
+@app.post("/admin/item/<int:item_id>/status")
+@login_required
+def admin_set_item_status(item_id):
+    require_admin()
     item = db.get_or_404(Item, item_id)
-    item.status = "resolved"
+    status = request.form.get("status")
+    if status not in {"open", "resolved"}:
+        abort(400)
+    item.status = status
     db.session.commit()
-    flash("Report closed by administrator.", "success")
-    return redirect(url_for("admin"))
+    flash("Report marked " + status + ".", "success")
+    return redirect(url_for("admin") + "#reports")
+
+
+@app.post("/admin/item/<int:item_id>/delete")
+@login_required
+def admin_delete_item(item_id):
+    require_admin()
+    item = db.get_or_404(Item, item_id)
+    Claim.query.filter_by(item_id=item.id).delete(synchronize_session=False)
+    db.session.delete(item)
+    db.session.commit()
+    flash("Report and its claims deleted.", "success")
+    return redirect(url_for("admin") + "#reports")
+
+
+@app.post("/admin/claim/<int:claim_id>/review")
+@login_required
+def admin_review_claim(claim_id):
+    require_admin()
+    claim = db.get_or_404(Claim, claim_id)
+    decision = request.form.get("decision")
+    if decision not in {"approved", "rejected"}:
+        abort(400)
+    if claim.status != "pending":
+        flash("This claim has already been reviewed.", "info")
+    else:
+        claim.status = decision
+        if decision == "approved":
+            claim.item.status = "resolved"
+            for other in claim.item.claims:
+                if other.id != claim.id and other.status == "pending":
+                    other.status = "rejected"
+        db.session.commit()
+        flash("Claim " + decision + " by administrator.", "success")
+    return redirect(url_for("admin") + "#claims")
 
 
 @app.route("/uploads/<path:filename>")
