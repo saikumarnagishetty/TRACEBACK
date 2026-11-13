@@ -525,6 +525,12 @@ def review_claim(claim_id):
     return redirect(url_for("item_detail", item_id=claim.item_id))
 
 
+@app.route("/profile")
+@login_required
+def profile():
+    return render_template("profile.html", user=current_user)
+
+
 @app.route("/dashboard")
 @login_required
 def dashboard():
