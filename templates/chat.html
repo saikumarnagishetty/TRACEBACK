@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Private chat · TRACEBACK{% endblock %}
+{% block content %}
+<a class="back-link" href="{{ url_for('item_detail', item_id=claim.item_id) }}">← Back to report</a>
+<div class="page-heading"><div class="eyebrow">PRIVATE CONVERSATION · {{ claim.item.title }}</div><h1>Chat with {{ other_user.name }}.</h1><p>Only the report owner and claimant can view this conversation.</p></div>
+<section class="panel chat-panel"><div class="chat-messages">{% for message in messages %}<div class="chat-bubble {{ 'mine' if message.sender_id == current_user.id else '' }}"><p>{{ message.body }}</p><small>{{ 'You' if message.sender_id == current_user.id else other_user.name }} · {{ message.created_at.strftime('%d %b, %I:%M %p') }}</small></div>{% else %}<p class="muted">No messages yet. Start the conversation below.</p>{% endfor %}</div>
+<form method="post" class="chat-compose"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><textarea name="body" rows="3" maxlength="2000" required placeholder="Write a private message…"></textarea><button class="button primary" type="submit">Send message ↗</button></form></section>
+{% endblock %}
