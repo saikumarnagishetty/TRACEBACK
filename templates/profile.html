@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}My Profile · TRACEBACK{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div class="eyebrow">YOUR ACCOUNT</div>
+  <h1>My profile.</h1>
+  <p>View the personal and campus details associated with your TRACEBACK account.</p>
+</div>
+<section class="panel profile-panel">
+  <div class="section-heading"><h2>Personal details</h2><span class="status {{ 'resolved' if user.is_active else 'pending' }}">{{ 'Active' if user.is_active else 'Inactive' }}</span></div>
+  <div class="profile-details">
+    <div><small>Full name</small><strong>{{ user.name }}</strong></div>
+    <div><small>Email address</small><strong>{{ user.email }}</strong></div>
+    <div><small>Mobile number</small><strong>{{ user.mobile_number or 'Not provided' }}</strong></div>
+    <div><small>Account type</small><strong>{{ 'Administrator' if user.is_admin else user.role|replace('-', ' ')|title }}</strong></div>
+    {% if user.role == 'student' %}
+    <div><small>Enrollment number</small><strong>{{ user.enrollment_number or 'Not provided' }}</strong></div>
+    <div><small>Semester</small><strong>{{ ('Semester ' ~ user.semester) if user.semester else 'Not provided' }}</strong></div>
+    <div><small>Course / programme</small><strong>{{ user.course or 'Not provided' }}</strong></div>
+    {% elif user.role == 'faculty' %}
+    <div><small>Subject / department</small><strong>{{ user.subject or 'Not provided' }}</strong></div>
+    {% elif user.role == 'staff' %}
+    <div><small>Designation</small><strong>{{ user.designation or 'Not provided' }}</strong></div>
+    {% endif %}
+    <div><small>Member since</small><strong>{{ user.created_at.strftime('%d %B %Y') if user.created_at else 'Not available' }}</strong></div>
+  </div>
+  <p class="muted">Your account details are visible only to you on this page. Contact Admin if any information needs correction.</p>
+  <a class="button secondary" href="{{ url_for('support') }}">Contact Admin</a>
+</section>
+{% endblock %}
