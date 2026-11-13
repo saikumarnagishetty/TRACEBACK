@@ -2,7 +2,89 @@
 {% block title %}Private chat · TRACEBACK{% endblock %}
 {% block content %}
 <a class="back-link" href="{{ url_for('item_detail', item_id=claim.item_id) }}">← Back to report</a>
-<div class="page-heading"><div class="eyebrow">PRIVATE CONVERSATION · {{ claim.item.title }}</div><h1>Chat with {{ other_user.name }}.</h1><p>Only the report owner and claimant can view this conversation.</p></div>
-<section class="panel chat-panel"><div class="chat-messages">{% for message in messages %}<div class="chat-bubble {{ 'mine' if message.sender_id == current_user.id else '' }}"><p>{{ message.body }}</p><small>{{ 'You' if message.sender_id == current_user.id else other_user.name }} · {{ message.created_at.strftime('%d %b, %I:%M %p') }}</small></div>{% else %}<p class="muted">No messages yet. Start the conversation below.</p>{% endfor %}</div>
-<form method="post" class="chat-compose"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><textarea name="body" rows="3" maxlength="2000" required placeholder="Write a private message…"></textarea><button class="button primary" type="submit">Send message ↗</button></form></section>
+<div class="page-heading"><div class="eyebrow">PRIVATE CONVERSATION · {{ claim.item.title }}</div><h1>Chat with {{ other_user.name }}.</h1><p>Only the report owner and claimant can view this conversation. Messages update automatically.</p></div>
+<section class="panel chat-panel">
+  <div class="chat-status" id="chat-status" role="status" aria-live="polite">Connecting…</div>
+  <div class="chat-messages" id="chat-messages" data-last-id="{{ messages[-1].id if messages else 0 }}" aria-live="polite">
+    {% for message in messages %}<div class="chat-bubble {{ 'mine' if message.sender_id == current_user.id else '' }}" data-message-id="{{ message.id }}"><p>{{ message.body }}</p><small>{{ 'You' if message.sender_id == current_user.id else other_user.name }} · {{ message.created_at.strftime('%d %b, %I:%M %p') }}</small></div>{% else %}<p class="muted" id="chat-empty">No messages yet. Start the conversation below.</p>{% endfor %}
+  </div>
+  <form method="post" class="chat-compose" id="chat-form">
+    <input type="hidden" id="chat-csrf" value="{{ csrf_token() }}">
+    <textarea id="chat-body" name="body" rows="3" maxlength="2000" required placeholder="Write a private message…"></textarea>
+    <button class="button primary" id="chat-send" type="submit">Send message ↗</button>
+  </form>
+</section>
+<script>
+(() => {
+  const box = document.getElementById('chat-messages');
+  const form = document.getElementById('chat-form');
+  const input = document.getElementById('chat-body');
+  const send = document.getElementById('chat-send');
+  const status = document.getElementById('chat-status');
+  const csrf = document.getElementById('chat-csrf').value;
+  const messagesUrl = {{ url_for('chat_messages', claim_id=claim.id)|tojson }};
+  const sendUrl = {{ url_for('send_chat_message', claim_id=claim.id)|tojson }};
+  let lastId = Number(box.dataset.lastId || 0);
+  let polling = false;
+
+  function addMessage(message) {
+    if (box.querySelector('[data-message-id="' + message.id + '"]')) return;
+    const empty = document.getElementById('chat-empty');
+    if (empty) empty.remove();
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-bubble' + (message.sender_id === {{ current_user.id }} ? ' mine' : '');
+    bubble.dataset.messageId = message.id;
+    const body = document.createElement('p');
+    body.textContent = message.body;
+    const meta = document.createElement('small');
+    meta.textContent = message.sender + ' · ' + message.created_at;
+    bubble.append(body, meta);
+    box.appendChild(bubble);
+    lastId = Math.max(lastId, Number(message.id));
+    box.dataset.lastId = String(lastId);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  async function poll() {
+    if (polling || document.hidden) return;
+    polling = true;
+    try {
+      const response = await fetch(messagesUrl + '?after_id=' + lastId, {headers: {'Accept': 'application/json'}});
+      if (!response.ok) throw new Error('Unable to refresh messages');
+      const data = await response.json();
+      data.messages.forEach(addMessage);
+      status.textContent = 'Live updates on · refreshes automatically';
+    } catch (error) {
+      status.textContent = 'Reconnecting…';
+    } finally { polling = false; }
+  }
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const body = input.value.trim();
+    if (!body) return;
+    send.disabled = true;
+    try {
+      const response = await fetch(sendUrl, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrf, 'Accept': 'application/json'},
+        body: JSON.stringify({body})
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Message could not be sent');
+      addMessage(data.message);
+      input.value = '';
+      input.focus();
+      status.textContent = 'Message sent';
+    } catch (error) {
+      status.textContent = error.message;
+    } finally { send.disabled = false; }
+  });
+
+  box.scrollTop = box.scrollHeight;
+  poll();
+  window.setInterval(poll, 2500);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
+})();
+</script>
 {% endblock %}
