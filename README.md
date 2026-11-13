@@ -41,3 +41,28 @@ Enter the administrator email when prompted. If the account already exists, conf
 ## Notes
 
 This is an educational starter application. Use HTTPS, a production WSGI server, backups, and a managed database before deploying for a real campus.
+
+
+## Zero-cost hosting preparation (Render + Neon)
+
+The repository includes a Render Blueprint (render.yaml) for a free Python web service. The app uses Gunicorn in production and exposes /healthz for health checks.
+
+### Deploy
+
+1. Create a free account at https://render.com and connect this GitHub repository.
+2. In Render, choose **New → Blueprint** and select this repository. Review the service and deploy it on the Free plan.
+3. Create a free PostgreSQL database at https://neon.com.
+4. In the Render service's **Environment** settings, add:
+   - DATABASE_URL: the Neon connection string (Render app converts PostgreSQL URLs to the psycopg 3 driver format).
+   - SECRET_KEY: a long, random secret generated privately; never commit it to GitHub or share it in chat.
+5. Redeploy, then open the Render-provided *.onrender.com URL and test registration, login, reports, claims, admin, support chat, and notifications.
+
+### Important free-tier limitations
+
+- Render's free web service can sleep after inactivity and its local filesystem is ephemeral.
+- Do not rely on the app's local SQLite database or uploads/ folder on Render. Use Neon PostgreSQL for database persistence and configure durable object storage for user-uploaded report images before real campus use.
+- The campus background video and logo are static repository assets, so they are deployed with the code.
+- A genuine root domain such as traceback.com or traceback.in normally requires purchasing/renewing a domain. Render's free onrender.com hostname is the dependable no-cost launch URL. A free third-party subdomain may be possible, but its availability and provider approval are not guaranteed.
+- Render's free Postgres offering is temporary; use an external managed free-tier PostgreSQL provider such as Neon and review its current limits.
+
+The initial deployment does not create a database or set secrets automatically. Complete the dashboard environment setup above before opening the site to users.
