@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body class="traceback-campus">
-<div class="video-background" aria-hidden="true"><video autoplay muted loop playsinline preload="none"><source src="{{ url_for('static', filename='videos/video.mp4') }}" type="video/mp4"></video></div>
+<div class="video-background" aria-hidden="true"><video autoplay muted loop playsinline preload="none" poster="{{ url_for('static', filename='images/1748685721645.webp') }}"><source data-src="{{ url_for('static', filename='videos/video.mp4') }}" type="video/mp4"></video></div>
 <header class="site-header">
   <a class="brand" href="{{ url_for('index') }}"><img class="campus-logo" src="{{ url_for('static', filename='images/amity-university-rajasthan-jaipur-logo.webp') }}" alt="Amity University Jaipur logo"> TRACEBACK</a>
   <nav>
@@ -39,6 +39,20 @@
 <footer class="site-footer"><span>TRACEBACK</span><span>Good things find their way back.</span></footer>
 <script>
 (()=> {
+ const video=document.querySelector(".video-background video");
+ const source=video&&video.querySelector("source[data-src]");
+ const connection=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
+ const loadVideo=()=>{
+   if(!video||!source||source.src||connection?.saveData)return;
+   source.src=source.dataset.src;
+   video.load();
+   const play=video.play();
+   if(play&&typeof play.catch==="function")play.catch(()=>{});
+ };
+ if(source){
+   if("requestIdleCallback" in window)requestIdleCallback(loadVideo,{timeout:3500});
+   else window.addEventListener("load",()=>setTimeout(loadVideo,1200),{once:true});
+ }
  const header=document.querySelector(".site-header"), hero=document.querySelector(".hero");
  const targets=document.querySelectorAll(".section,.page-heading,.stats-row,.detail-layout,.form-shell,.error-state");
  targets.forEach(el=>el.classList.add("reveal"));
