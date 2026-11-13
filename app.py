@@ -3,7 +3,7 @@ from datetime import datetime
 import click
 from pathlib import Path
 
-from flask import Flask, abort, flash, redirect, render_template, request, url_for
+from flask import Flask, abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import (
     LoginManager, UserMixin, current_user, login_required, login_user, logout_user
 )
@@ -301,6 +301,53 @@ def chat(claim_id):
     messages = DirectMessage.query.filter_by(claim_id=claim.id).order_by(DirectMessage.created_at.asc()).all()
     other_user = db.session.get(User, claim.item.user_id if current_user.id == claim.user_id else claim.user_id)
     return render_template("chat.html", claim=claim, messages=messages, other_user=other_user)
+
+
+@app.get("/chat/<int:claim_id>/messages")
+@login_required
+def chat_messages(claim_id):
+    claim = db.get_or_404(Claim, claim_id)
+    if current_user.id not in {claim.user_id, claim.item.user_id}: abort(403)
+    try:
+        after_id = max(0, int(request.args.get("after_id", 0)))
+    except (TypeError, ValueError):
+        after_id = 0
+    query = DirectMessage.query.filter_by(claim_id=claim.id)
+    if after_id:
+        query = query.filter(DirectMessage.id > after_id)
+    messages = query.order_by(DirectMessage.id.asc()).limit(100).all()
+    return jsonify(messages=[{
+        "id": message.id,
+        "sender_id": message.sender_id,
+        "body": message.body,
+        "sender": "You" if message.sender_id == current_user.id else (
+            claim.item.author.name if current_user.id == claim.user_id else claim.claimant.name
+        ),
+        "created_at": message.created_at.strftime("%d %b, %I:%M %p"),
+    } for message in messages])
+
+
+@app.post("/chat/<int:claim_id>/send")
+@login_required
+def send_chat_message(claim_id):
+    claim = db.get_or_404(Claim, claim_id)
+    if current_user.id not in {claim.user_id, claim.item.user_id}: abort(403)
+    payload = request.get_json(silent=True) or {}
+    body = str(payload.get("body", "")).strip()
+    if not body or len(body) > 2000:
+        return jsonify(error="Message must contain 1–2000 characters."), 400
+    message = DirectMessage(claim_id=claim.id, sender_id=current_user.id, body=body)
+    db.session.add(message)
+    recipient = claim.item.user_id if current_user.id == claim.user_id else claim.user_id
+    add_notification(recipient, f"New private message about {claim.item.title}.", url_for("chat", claim_id=claim.id))
+    db.session.commit()
+    return jsonify(message={
+        "id": message.id,
+        "sender_id": message.sender_id,
+        "body": message.body,
+        "sender": "You",
+        "created_at": message.created_at.strftime("%d %b, %I:%M %p"),
+    }), 201
 
 
 @app.post("/logout")
