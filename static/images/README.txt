@@ -1,0 +1,1 @@
+Place the college campus photo in this folder and name it college-campus.jpg. The site background is configured to load /static/images/college-campus.jpg. Recommended: landscape image, at least 1600px wide. Keep the original photo; the CSS overlay handles contrast.
