@@ -26,7 +26,7 @@
         {% if item.image_filename %}<img src="{{ url_for('uploaded_file', filename=item.image_filename) }}" alt="{{ item.title }}">{% else %}<span class="visual-symbol">{% if item.category == 'Electronics' %}⌁{% elif item.category == 'Bags' %}▱{% elif item.category == 'Keys' %}⚿{% elif item.category == 'Books & stationery' %}▤{% else %}✳{% endif %}</span>{% endif %}
         <span class="type-tag {{ item.report_type }}">{{ item.report_type }}</span>
       </div>
-      <div class="item-card-body"><div class="card-meta">{{ item.category }} <span>·</span> {{ item.event_date.strftime('%d %b %Y') }}</div><h3>{{ item.title }}</h3><p>{{ item.description|truncate(100) }}</p><div class="card-location">⌖ {{ item.location }}</div><div class="card-author">Posted by {{ item.author.name }}</div></div>
+      <div class="item-card-body"><div class="card-meta">{{ item.category }} <span>·</span> {{ item.event_date.strftime('%d %b %Y') }}</div><h3>{{ item.title }}</h3><p>{{ item.description|truncate(100) }}</p><div class="card-location">⌖ {{ item.location }}</div><div class="card-author">Posted by Campus member</div></div>
     </a>
     {% endfor %}
   </div>
