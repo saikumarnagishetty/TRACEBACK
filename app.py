@@ -647,6 +647,7 @@ def admin_review_claim(claim_id):
             for other in claim.item.claims:
                 if other.id != claim.id and other.status == "pending":
                     other.status = "rejected"
+        add_notification(claim.user_id, f"Your claim for {claim.item.title} was {decision} by an administrator.", url_for("item_detail", item_id=claim.item_id))
         db.session.commit()
         flash("Claim " + decision + " by administrator.", "success")
     return redirect(url_for("admin") + "#claims")
