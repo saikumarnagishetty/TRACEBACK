@@ -238,3 +238,6 @@ body{background:transparent;position:relative}
   .site-header{background:rgba(12,36,27,.94)!important}
   .section{background:rgba(237,244,225,.95)!important}
 }
+
+/* Lightweight report pagination */
+.pagination{display:flex;align-items:center;justify-content:center;gap:16px;margin:28px 0 8px;color:var(--muted);font-size:12px}
