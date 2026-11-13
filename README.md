@@ -1,0 +1,33 @@
+# TRACEBACK
+
+A minimal college lost-and-found management web application built with Python, Flask, and SQLite.
+
+The repository was inspected before implementation. It was empty (no files, commits, or branches), so this is a clean initial implementation.
+
+## Features
+
+- Student registration and login
+- Post lost and found item reports
+- Browse, search, and filter reports
+- Submit ownership claims with proof details
+- Report owners can review and resolve claims
+- Admin dashboard for moderation
+- SQLite database initialized automatically
+
+## Run locally
+
+```bash
+python -m venv .venv
+# Windows: .venv\\Scripts\\activate
+# macOS/Linux: source .venv/bin/activate
+pip install -r requirements.txt
+python app.py
+```
+
+Open http://127.0.0.1:5000.
+
+Set `SECRET_KEY` to a long random value in production. The first registered account is a regular student; promote an administrator by setting `ADMIN_EMAIL` before registering that email address.
+
+## Notes
+
+This is an educational starter application. Use HTTPS, a production WSGI server, backups, and a managed database before deploying for a real campus.
