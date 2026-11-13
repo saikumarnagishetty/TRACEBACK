@@ -10,7 +10,7 @@ from flask_login import (
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
-from sqlalchemy import or_, inspect, text
+from sqlalchemy import create_engine, or_, inspect, text
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 from wtforms import (
@@ -749,6 +749,92 @@ def forbidden(_error):
 @app.errorhandler(404)
 def not_found(_error):
     return render_template("error.html", code=404, message="We couldn't find that page or report."), 404
+
+
+@app.cli.command("migrate-sqlite-to-postgres")
+@click.option(
+    "--source",
+    default=str(BASE_DIR / "instance" / "traceback.db"),
+    show_default=True,
+    type=click.Path(path_type=Path, exists=True, dir_okay=False),
+)
+def migrate_sqlite_to_postgres_command(source):
+    """Copy all existing SQLite tables and rows into an empty PostgreSQL database."""
+    database_url = app.config["SQLALCHEMY_DATABASE_URI"]
+    if not database_url.startswith(("postgresql://", "postgresql+")):
+        raise click.ClickException(
+            "DATABASE_URL must point to PostgreSQL before running this migration."
+        )
+
+    source_url = "sqlite:///" + source.resolve().as_posix()
+    source_engine = create_engine(source_url)
+    try:
+        source_metadata = db.metadata.__class__()
+        source_metadata.reflect(bind=source_engine)
+        if not source_metadata.tables:
+            raise click.ClickException("The source SQLite database has no tables.")
+
+        target_inspector = inspect(db.engine)
+        target_tables = set(target_inspector.get_table_names())
+        missing_tables = set(source_metadata.tables) - target_tables
+        if missing_tables:
+            raise click.ClickException(
+                "Target PostgreSQL is missing tables: " + ", ".join(sorted(missing_tables))
+            )
+
+        with db.engine.connect() as target_connection:
+            occupied = [
+                table_name for table_name in source_metadata.tables
+                if target_connection.execute(
+                    text('SELECT 1 FROM "' + table_name.replace('"', '""') + '" LIMIT 1')
+                ).first()
+            ]
+        if occupied:
+            raise click.ClickException(
+                "Target PostgreSQL is not empty. Existing rows found in: "
+                + ", ".join(sorted(occupied))
+                + ". Migration stopped to prevent duplicate or mixed data."
+            )
+
+        copied = {}
+        with source_engine.connect() as source_connection, db.engine.begin() as target_connection:
+            for table in source_metadata.sorted_tables:
+                rows = source_connection.execute(table.select()).mappings().all()
+                if rows:
+                    target_connection.execute(table.insert(), [dict(row) for row in rows])
+                copied[table.name] = len(rows)
+
+            if db.engine.dialect.name == "postgresql":
+                preparer = db.engine.dialect.identifier_preparer
+                for table in source_metadata.sorted_tables:
+                    primary_keys = list(table.primary_key.columns)
+                    if len(primary_keys) != 1:
+                        continue
+                    column = primary_keys[0]
+                    if not str(column.type).upper().startswith(("INTEGER", "BIGINT")):
+                        continue
+                    sequence = target_connection.execute(
+                        text("SELECT pg_get_serial_sequence(:table_name, :column_name)"),
+                        {"table_name": table.name, "column_name": column.name},
+                    ).scalar()
+                    if sequence:
+                        quoted_table = preparer.quote(table.name)
+                        quoted_column = preparer.quote(column.name)
+                        target_connection.execute(
+                            text(
+                                "SELECT setval(:sequence_name, "
+                                f"COALESCE(MAX({quoted_column}), 1), "
+                                f"MAX({quoted_column}) IS NOT NULL) FROM {quoted_table}"
+                            ),
+                            {"sequence_name": sequence},
+                        )
+
+        click.echo("SQLite data copied successfully to PostgreSQL:")
+        for table_name, row_count in copied.items():
+            click.echo(f"  {table_name}: {row_count} rows")
+        click.echo("Your original SQLite database was not modified.")
+    finally:
+        source_engine.dispose()
 
 
 with app.app_context():
