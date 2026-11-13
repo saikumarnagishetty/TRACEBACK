@@ -50,9 +50,9 @@
    if(play&&typeof play.catch==="function")play.catch(()=>{});
  };
  if(source){
-   if(window.matchMedia("(max-width: 760px)").matches)loadVideo();
-   else if("requestIdleCallback" in window)requestIdleCallback(loadVideo,{timeout:3500});
-   else window.addEventListener("load",loadVideo,{once:true});
+   // Let the page render first; fetch the background video during idle time.
+   if("requestIdleCallback" in window)requestIdleCallback(loadVideo,{timeout:2500});
+   else window.addEventListener("load",()=>window.setTimeout(loadVideo,700),{once:true});
  }
  const navToggle=document.querySelector(".mobile-nav-toggle");
  const nav=document.getElementById("primary-navigation");
