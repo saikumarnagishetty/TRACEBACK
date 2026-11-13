@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Post a report · TRACEBACK{% endblock %}
+{% block content %}
+<section class="form-shell wide"><div class="eyebrow">ADD TO THE COMMUNITY BOARD</div><h1>Share the details.</h1><p class="form-intro">A few useful details can make all the difference in getting an item home.</p>
+<form method="post" enctype="multipart/form-data" class="panel form-panel">{{ form.hidden_tag() }}
+<div class="form-row"><label>{{ form.report_type.label }}{{ form.report_type() }}</label><label>{{ form.category.label }}{{ form.category() }}</label></div>
+<label>{{ form.title.label }}{{ form.title(placeholder='e.g. Black wireless earbuds') }}{% for e in form.title.errors %}<small class="field-error">{{ e }}</small>{% endfor %}</label>
+<label>{{ form.description.label }}{{ form.description(rows=4, placeholder='Colour, brand, identifying marks, contents…') }}{% for e in form.description.errors %}<small class="field-error">{{ e }}</small>{% endfor %}</label>
+<div class="form-row"><label>{{ form.location.label }}{{ form.location(placeholder='e.g. Library, second floor') }}</label><label>{{ form.event_date.label }}{{ form.event_date(type='date') }}</label></div>
+<label class="upload-label">Add a photo <span class="muted">(optional · PNG/JPG/WEBP · max 4 MB)</span><input type="file" name="image" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"></label>
+<button class="button primary full" type="submit">Publish report <span>↗</span></button></form></section>
+{% endblock %}
