@@ -136,7 +136,8 @@ class ClaimForm(FlaskForm):
 
 @login_manager.user_loader
 def load_user(user_id):
-    return db.session.get(User, int(user_id))
+    user = db.session.get(User, int(user_id))
+    return user if user and user.is_active else None
 
 
 @app.context_processor
