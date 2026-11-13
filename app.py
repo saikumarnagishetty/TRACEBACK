@@ -5,7 +5,7 @@ import click
 from pathlib import Path
 
 from dotenv import load_dotenv
-from flask import Flask, abort, flash, g, jsonify, redirect, render_template, request, url_for
+from flask import Flask, abort, flash, g, jsonify, redirect, render_template, request, session, url_for
 from flask_login import (
     LoginManager, UserMixin, current_user, login_required, login_user, logout_user
 )
@@ -50,7 +50,7 @@ app.config.update(
         # Keep each local/Vercel worker's retained PostgreSQL connections low.
         # Session Pooler has a small shared client limit; never allow overflow.
         "pool_pre_ping": True,
-        "pool_recycle": 120,
+        "pool_recycle": 1800,
         "pool_size": 1,
         "max_overflow": 0,
         "pool_timeout": 10,
@@ -254,7 +254,19 @@ def load_user(user_id):
 
 @app.context_processor
 def inject_globals():
-    unread_notifications = Notification.query.filter_by(user_id=current_user.id, is_read=False).count() if current_user.is_authenticated else 0
+    # Cache the navbar badge in the signed session for 30 seconds. This avoids
+    # an extra PostgreSQL round trip on every authenticated page view.
+    unread_notifications = 0
+    if current_user.is_authenticated:
+        cached_at = session.get("_unread_count_at", 0)
+        if time.time() - cached_at >= 30 or "_unread_count" not in session:
+            unread_notifications = Notification.query.filter_by(
+                user_id=current_user.id, is_read=False
+            ).count()
+            session["_unread_count"] = unread_notifications
+            session["_unread_count_at"] = time.time()
+        else:
+            unread_notifications = session.get("_unread_count", 0)
     return {"categories": CATEGORIES, "unread_notifications": unread_notifications}
 
 
