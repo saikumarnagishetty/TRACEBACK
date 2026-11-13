@@ -53,6 +53,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
+    mobile_number = db.Column(db.String(20), nullable=True)
     role = db.Column(db.String(20), nullable=False, default="student")
     enrollment_number = db.Column(db.String(40))
     semester = db.Column(db.String(20))
