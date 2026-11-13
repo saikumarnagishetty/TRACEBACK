@@ -12,7 +12,7 @@ from flask_login import (
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
-from sqlalchemy import create_engine, func, or_, inspect, text
+from sqlalchemy import create_engine, event, func, or_, inspect, text
 from sqlalchemy.orm import joinedload, selectinload
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
@@ -74,6 +74,22 @@ csrf = CSRFProtect(app)
 @app.before_request
 def start_request_timer():
     g.request_started_at = time.perf_counter()
+
+
+@event.listens_for(db.engine, "before_cursor_execute")
+def start_sql_timer(conn, cursor, statement, parameters, context, executemany):
+    context._traceback_query_started = time.perf_counter()
+
+
+@event.listens_for(db.engine, "after_cursor_execute")
+def log_slow_sql(conn, cursor, statement, parameters, context, executemany):
+    started = getattr(context, "_traceback_query_started", None)
+    if started is not None:
+        duration_ms = (time.perf_counter() - started) * 1000
+        if duration_ms >= 50:
+            # Log the operation, not parameter values, to avoid exposing user data.
+            operation = statement.lstrip().split(None, 1)[0].upper() if statement.strip() else "UNKNOWN"
+            app.logger.warning("TRACEBACK slow_sql operation=%s duration_ms=%.1f", operation, duration_ms)
 
 
 @app.after_request
@@ -936,27 +952,31 @@ def migrate_sqlite_to_postgres_command(source):
         source_engine.dispose()
 
 
-with app.app_context():
-    db.create_all()
-    # Add profile columns to existing databases without deleting existing data.
-    user_columns = {column["name"] for column in inspect(db.engine).get_columns("user")}
-    profile_columns = {
-        "role": "VARCHAR(20) NOT NULL DEFAULT 'student'",
-        "enrollment_number": "VARCHAR(40)",
-        "semester": "VARCHAR(20)",
-        "course": "VARCHAR(100)",
-        "subject": "VARCHAR(100)",
-        "designation": "VARCHAR(100)",
-        "is_active": "BOOLEAN NOT NULL DEFAULT TRUE",
-        "mobile_number": "VARCHAR(20)",
-        "email_verified": "BOOLEAN NOT NULL DEFAULT TRUE",
-        "verification_code_hash": "VARCHAR(255)",
-        "verification_expires_at": "TIMESTAMP",
-    }
-    with db.engine.begin() as connection:
-        for column_name, column_type in profile_columns.items():
-            if column_name not in user_columns:
-                connection.execute(text("ALTER TABLE user ADD COLUMN " + column_name + " " + column_type))
+# Vercel workers must not run schema discovery/DDL during module import.
+# The deployed PostgreSQL schema is managed separately; startup DDL adds
+# several database round trips to every new serverless instance.
+if not IS_VERCEL:
+    with app.app_context():
+        db.create_all()
+        # Add profile columns to existing local databases without deleting data.
+        user_columns = {column["name"] for column in inspect(db.engine).get_columns("user")}
+        profile_columns = {
+            "role": "VARCHAR(20) NOT NULL DEFAULT 'student'",
+            "enrollment_number": "VARCHAR(40)",
+            "semester": "VARCHAR(20)",
+            "course": "VARCHAR(100)",
+            "subject": "VARCHAR(100)",
+            "designation": "VARCHAR(100)",
+            "is_active": "BOOLEAN NOT NULL DEFAULT TRUE",
+            "mobile_number": "VARCHAR(20)",
+            "email_verified": "BOOLEAN NOT NULL DEFAULT TRUE",
+            "verification_code_hash": "VARCHAR(255)",
+            "verification_expires_at": "TIMESTAMP",
+        }
+        with db.engine.begin() as connection:
+            for column_name, column_type in profile_columns.items():
+                if column_name not in user_columns:
+                    connection.execute(text("ALTER TABLE user ADD COLUMN " + column_name + " " + column_type))
 
 
 if __name__ == "__main__":
