@@ -12,7 +12,7 @@
 </head>
 <body class="traceback-campus">
 <header class="site-header">
-  <a class="brand" href="{{ url_for('index') }}"><span class="brand-mark">T</span> TRACEBACK</a>
+  <a class="brand" href="{{ url_for('index') }}"><img class="campus-logo" src="{{ url_for('static', filename='images/amity-university-rajasthan-jaipur-logo.webp') }}" alt="Amity University Jaipur logo"> TRACEBACK</a>
   <nav>
     <a href="{{ url_for('index') }}#reports">Browse</a>
     {% if current_user.is_authenticated %}
