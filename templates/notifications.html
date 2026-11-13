@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Notifications · TRACEBACK{% endblock %}
+{% block content %}
+<div class="page-heading"><div class="eyebrow">YOUR UPDATES</div><h1>Notifications.</h1><p>Stay up to date with claims, messages and report activity.</p></div>
+{% if notifications %}<form method="post" action="{{ url_for('mark_all_notifications_read') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button secondary small" type="submit">Mark all as read</button></form><div class="simple-list">{% for note in notifications %}<div class="notification-row {{ 'unread' if not note.is_read else '' }}"><div class="list-copy"><strong>{{ note.message }}</strong><small>{{ note.created_at.strftime('%d %b %Y, %I:%M %p') }}</small></div><form method="post" action="{{ url_for('mark_notification_read', notification_id=note.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="admin-action" type="submit">Open</button></form></div>{% endfor %}</div>{% else %}<div class="empty-state"><h3>You're all caught up.</h3><p>New updates will appear here.</p></div>{% endif %}
+{% endblock %}
