@@ -803,7 +803,10 @@ def migrate_sqlite_to_postgres_command(source):
             for table in source_metadata.sorted_tables:
                 rows = source_connection.execute(table.select()).mappings().all()
                 if rows:
-                    target_connection.execute(table.insert(), [dict(row) for row in rows])
+                    target_table = db.metadata.tables[table.name]
+                    target_connection.execute(
+                        target_table.insert(), [dict(row) for row in rows]
+                    )
                 copied[table.name] = len(rows)
 
             if db.engine.dialect.name == "postgresql":
