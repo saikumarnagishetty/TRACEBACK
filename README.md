@@ -11,7 +11,9 @@ The repository was inspected before implementation. It was empty (no files, comm
 - Browse, search, and filter reports
 - Submit ownership claims with proof details
 - Report owners can review and resolve claims
-- Admin dashboard for moderation
+- Admin control centre: manage members, account access, reports, and ownership claims
+- Admin can activate/deactivate accounts, grant/revoke administrator access, close/reopen reports, and review/delete content
+- Existing database files are upgraded safely with the account-active field
 - SQLite database initialized automatically
 
 ## Run locally
