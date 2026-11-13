@@ -15,7 +15,7 @@
 <div id="staff-fields" class="role-fields" hidden><label>{{ form.designation.label }}{{ form.designation(placeholder='e.g. Lab Assistant / Office Staff') }}</label></div>
 {% endif %}
 <label>{{ form.email.label }}{{ form.email(placeholder='you@college.edu') }}{% for e in form.email.errors %}<small class="field-error">{{ e }}</small>{% endfor %}</label>
-{% if mode == 'register' %}<label>{{ form.mobile_number.label }}{{ form.mobile_number(placeholder='+91 98765 43210', inputmode='tel', autocomplete='tel') }}{% for e in form.mobile_number.errors %}<small class="field-error">{{ e }}</small>{% endfor %}</label>{% endif %}
+{% if mode == 'register' %}<label>{{ form.mobile_number.label }}{{ form.mobile_number(placeholder='+919876543210', inputmode='tel', autocomplete='tel') }}{% for e in form.mobile_number.errors %}<small class="field-error">{{ e }}</small>{% endfor %}</label>{% endif %}
 <label>{{ form.password.label }}{{ form.password(placeholder='At least 8 characters') }}{% for e in form.password.errors %}<small class="field-error">{{ e }}</small>{% endfor %}</label>
 {% if mode == 'register' %}<label>{{ form.confirm.label }}{{ form.confirm(placeholder='Enter password again') }}{% for e in form.confirm.errors %}<small class="field-error">{{ e }}</small>{% endfor %}</label>{% endif %}
 <button class="button primary full" type="submit">{{ 'Create account' if mode == 'register' else 'Sign in' }} <span>↗</span></button></form>
