@@ -9,7 +9,7 @@ from flask_login import (
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
-from sqlalchemy import or_
+from sqlalchemy import or_, inspect, text
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 from wtforms import (
@@ -51,6 +51,12 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
+    role = db.Column(db.String(20), nullable=False, default="student")
+    enrollment_number = db.Column(db.String(40))
+    semester = db.Column(db.String(20))
+    course = db.Column(db.String(100))
+    subject = db.Column(db.String(100))
+    designation = db.Column(db.String(100))
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     items = db.relationship("Item", backref="author", lazy=True)
@@ -91,6 +97,12 @@ class Claim(db.Model):
 class RegisterForm(FlaskForm):
     name = StringField("Full name", validators=[DataRequired(), Length(min=2, max=80)])
     email = StringField("College email", validators=[DataRequired(), Email(), Length(max=120)])
+    role = SelectField("I am a", choices=[("student", "Student"), ("faculty", "Faculty"), ("staff", "Non-teaching staff")], validators=[DataRequired()])
+    enrollment_number = StringField("Enrollment number", validators=[Optional(), Length(max=40)])
+    semester = SelectField("Semester", choices=[("", "Select semester")] + [(str(i), f"Semester {i}") for i in range(1, 13)], validators=[Optional()])
+    course = StringField("Course / programme", validators=[Optional(), Length(max=100)])
+    subject = StringField("Subject / department", validators=[Optional(), Length(max=100)])
+    designation = StringField("Designation", validators=[Optional(), Length(max=100)])
     password = PasswordField("Password", validators=[DataRequired(), Length(min=8)])
     confirm = PasswordField("Confirm password", validators=[DataRequired(), EqualTo("password")])
     submit = SubmitField("Create account")
@@ -164,8 +176,29 @@ def register():
         if User.query.filter_by(email=email).first():
             flash("An account with that email already exists.", "error")
         else:
+            role = form.role.data
+            role_errors = []
+            if role == "student":
+                if not form.enrollment_number.data or not form.enrollment_number.data.strip(): role_errors.append("Enrollment number is required for students.")
+                if not form.semester.data: role_errors.append("Please select your semester.")
+                if not form.course.data or not form.course.data.strip(): role_errors.append("Course is required for students.")
+            elif role == "faculty":
+                if not form.subject.data or not form.subject.data.strip(): role_errors.append("Subject / department is required for faculty.")
+            elif role == "staff":
+                if not form.designation.data or not form.designation.data.strip(): role_errors.append("Designation is required for non-teaching staff.")
+            if role_errors:
+                for error in role_errors: flash(error, "error")
+                return render_template("auth.html", form=form, mode="register")
             admin_email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
-            user = User(name=form.name.data.strip(), email=email, is_admin=(email == admin_email and bool(admin_email)))
+            user = User(
+                name=form.name.data.strip(), email=email, role=role,
+                enrollment_number=(form.enrollment_number.data or "").strip() or None if role == "student" else None,
+                semester=form.semester.data if role == "student" else None,
+                course=(form.course.data or "").strip() or None if role == "student" else None,
+                subject=(form.subject.data or "").strip() or None if role == "faculty" else None,
+                designation=(form.designation.data or "").strip() or None if role == "staff" else None,
+                is_admin=(email == admin_email and bool(admin_email))
+            )
             user.set_password(form.password.data)
             db.session.add(user)
             db.session.commit()
@@ -339,6 +372,20 @@ def not_found(_error):
 
 with app.app_context():
     db.create_all()
+    # Add profile columns to existing databases without deleting existing data.
+    user_columns = {column["name"] for column in inspect(db.engine).get_columns("user")}
+    profile_columns = {
+        "role": "VARCHAR(20) NOT NULL DEFAULT 'student'",
+        "enrollment_number": "VARCHAR(40)",
+        "semester": "VARCHAR(20)",
+        "course": "VARCHAR(100)",
+        "subject": "VARCHAR(100)",
+        "designation": "VARCHAR(100)",
+    }
+    with db.engine.begin() as connection:
+        for column_name, column_type in profile_columns.items():
+            if column_name not in user_columns:
+                connection.execute(text("ALTER TABLE user ADD COLUMN " + column_name + " " + column_type))
 
 
 if __name__ == "__main__":
