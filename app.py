@@ -1,10 +1,11 @@
 import os
+import time
 from datetime import datetime
 import click
 from pathlib import Path
 
 from dotenv import load_dotenv
-from flask import Flask, abort, flash, jsonify, redirect, render_template, request, url_for
+from flask import Flask, abort, flash, g, jsonify, redirect, render_template, request, url_for
 from flask_login import (
     LoginManager, UserMixin, current_user, login_required, login_user, logout_user
 )
@@ -65,6 +66,26 @@ login_manager = LoginManager(app)
 login_manager.login_view = "login"
 login_manager.login_message_category = "info"
 csrf = CSRFProtect(app)
+
+
+@app.before_request
+def start_request_timer():
+    g.request_started_at = time.perf_counter()
+
+
+@app.after_request
+def log_request_duration(response):
+    started_at = getattr(g, "request_started_at", None)
+    if started_at is not None:
+        duration_ms = (time.perf_counter() - started_at) * 1000
+        app.logger.info(
+            "TRACEBACK request method=%s path=%s status=%s duration_ms=%.1f",
+            request.method,
+            request.path,
+            response.status_code,
+            duration_ms,
+        )
+    return response
 
 
 class User(UserMixin, db.Model):
