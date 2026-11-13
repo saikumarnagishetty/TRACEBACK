@@ -355,6 +355,28 @@ def create_admin_command(email):
         click.echo(f"Administrator access enabled for {email}.")
 
 
+@app.cli.command("reset-admin-password")
+@click.option("--email", prompt=True, help="Email address of the existing administrator account.")
+def reset_admin_password_command(email):
+    """Reset the password for an existing administrator account."""
+    email = email.strip().lower()
+    with app.app_context():
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            raise click.ClickException("No account exists for that email. Create the account first.")
+        if not user.is_admin:
+            if not click.confirm(f"{email} is not an admin. Promote this account and reset its password?", default=False):
+                click.echo("No changes made.")
+                return
+            user.is_admin = True
+        password = click.prompt("New administrator password", hide_input=True, confirmation_prompt=True)
+        if len(password) < 8:
+            raise click.ClickException("Password must contain at least 8 characters.")
+        user.set_password(password)
+        db.session.commit()
+        click.echo(f"Administrator password updated for {email}.")
+
+
 @app.route("/admin")
 @login_required
 def admin():
