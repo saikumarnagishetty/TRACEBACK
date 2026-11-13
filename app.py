@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+import click
 from pathlib import Path
 
 from flask import Flask, abort, flash, redirect, render_template, request, url_for
@@ -189,7 +190,6 @@ def register():
             if role_errors:
                 for error in role_errors: flash(error, "error")
                 return render_template("auth.html", form=form, mode="register")
-            admin_email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
             user = User(
                 name=form.name.data.strip(), email=email, role=role,
                 enrollment_number=(form.enrollment_number.data or "").strip() or None if role == "student" else None,
@@ -197,7 +197,7 @@ def register():
                 course=(form.course.data or "").strip() or None if role == "student" else None,
                 subject=(form.subject.data or "").strip() or None if role == "faculty" else None,
                 designation=(form.designation.data or "").strip() or None if role == "staff" else None,
-                is_admin=(email == admin_email and bool(admin_email))
+                is_admin=False
             )
             user.set_password(form.password.data)
             db.session.add(user)
@@ -321,6 +321,38 @@ def dashboard():
     claims_received = Claim.query.join(Item).filter(Item.user_id == current_user.id).order_by(Claim.created_at.desc()).all()
     my_claims = Claim.query.filter_by(user_id=current_user.id).order_by(Claim.created_at.desc()).all()
     return render_template("dashboard.html", my_items=my_items, claims_received=claims_received, my_claims=my_claims)
+
+
+@app.cli.command("create-admin")
+@click.option("--email", prompt=True, help="Email address for the administrator account.")
+def create_admin_command(email):
+    """Create an administrator or promote an existing local account."""
+    email = email.strip().lower()
+    if not email:
+        raise click.ClickException("Email address is required.")
+
+    with app.app_context():
+        user = User.query.filter_by(email=email).first()
+        if user:
+            if user.is_admin:
+                click.echo(f"{email} is already an administrator.")
+                return
+            if not click.confirm(f"Promote the existing account {email} to administrator?", default=False):
+                click.echo("No changes made.")
+                return
+            user.is_admin = True
+        else:
+            name = click.prompt("Administrator full name")
+            password = click.prompt("New administrator password", hide_input=True, confirmation_prompt=True)
+            if len(password) < 8:
+                raise click.ClickException("Password must contain at least 8 characters.")
+            user = User(name=name.strip(), email=email, role="staff",
+                        designation="Administrator", is_admin=True)
+            user.set_password(password)
+            db.session.add(user)
+
+        db.session.commit()
+        click.echo(f"Administrator access enabled for {email}.")
 
 
 @app.route("/admin")
