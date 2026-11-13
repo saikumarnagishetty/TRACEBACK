@@ -26,7 +26,13 @@ python app.py
 
 Open http://127.0.0.1:5000.
 
-Set `SECRET_KEY` to a long random value in production. The first registered account is a regular student; promote an administrator by setting `ADMIN_EMAIL` before registering that email address.
+Set `SECRET_KEY` to a long random value in production. Public registration never grants administrator privileges. Create the first administrator from the project directory with:
+
+```bash
+flask --app app create-admin
+```
+
+Enter the administrator email when prompted. If the account already exists, confirm that you want to promote it; otherwise, enter a name and a new password. Run this command only on a trusted machine with access to the application database. Existing administrator accounts remain administrators.
 
 ## Notes
 
