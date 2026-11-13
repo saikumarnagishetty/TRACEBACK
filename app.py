@@ -13,7 +13,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import create_engine, event, func, or_, inspect, text
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import joinedload
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 from wtforms import (
@@ -707,12 +707,21 @@ def admin():
     )
     support_tickets = SupportTicket.query.options(
         joinedload(SupportTicket.user),
-        selectinload(SupportTicket.messages),
+    ).add_columns(
+        db.session.query(func.count(SupportMessage.id))
+        .filter(SupportMessage.ticket_id == SupportTicket.id)
+        .scalar_subquery()
+        .label("message_count")
     ).order_by(SupportTicket.created_at.desc()).paginate(
         page=max(request.args.get("support_page", 1, type=int), 1),
         per_page=10,
         error_out=False,
     )
+    # The admin list needs only a count, not every message body in every ticket.
+    support_ticket_rows = support_tickets.items
+    for ticket, message_count in support_ticket_rows:
+        ticket.admin_message_count = message_count
+    support_tickets.items = [ticket for ticket, _message_count in support_ticket_rows]
 
     # Fetch all dashboard summary counters in one database round trip.
     stats = db.session.query(
