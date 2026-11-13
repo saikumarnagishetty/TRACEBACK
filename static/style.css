@@ -343,3 +343,32 @@ input,select,textarea{max-width:100%}
 @media(prefers-reduced-motion:reduce){
   .mobile-nav-toggle,.site-header nav{transition:none!important}
 }
+
+
+/* Mobile campus background fallback: keep the poster visible even before video playback */
+@media(max-width:760px){
+  .video-background{
+    position:fixed!important;
+    inset:0!important;
+    width:100%!important;
+    height:100vh!important;
+    height:100svh!important;
+    min-height:100vh!important;
+    overflow:hidden!important;
+    background-color:#18291f!important;
+    background-image:
+      linear-gradient(180deg,rgba(9,30,22,.42),rgba(10,31,23,.50)),
+      url("/static/images/1748685721645.webp")!important;
+    background-position:center center!important;
+    background-size:cover!important;
+    background-repeat:no-repeat!important;
+  }
+  .video-background video{
+    position:absolute!important;
+    inset:0!important;
+    width:100%!important;
+    height:100%!important;
+    object-fit:cover!important;
+    object-position:center center!important;
+  }
+}
