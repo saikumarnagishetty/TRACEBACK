@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Admin · TRACEBACK{% endblock %}
+{% block content %}
+<div class="page-heading"><div class="eyebrow">CAMPUS OPERATIONS</div><h1>Admin overview.</h1><p>Review activity and keep the community board useful.</p></div>
+<div class="stats-row"><div class="stat-card"><strong>{{ users|length }}</strong><span>Members</span></div><div class="stat-card"><strong>{{ items|length }}</strong><span>Reports</span></div><div class="stat-card"><strong>{{ pending }}</strong><span>Pending claims</span></div></div>
+<section class="section"><div class="section-heading"><h2>All reports</h2></div><div class="simple-list">{% for item in items %}<div class="admin-row"><span class="list-copy"><strong>{{ item.title }}</strong><small>{{ item.report_type }} · {{ item.author.name }} · {{ item.location }}</small></span><span class="status {{ item.status }}">{{ item.status }}</span><a class="text-link" href="{{ url_for('item_detail', item_id=item.id) }}">View</a>{% if item.status == 'open' %}<form method="post" action="{{ url_for('admin_close_item', item_id=item.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="text-link" type="submit">Close</button></form>{% endif %}</div>{% else %}<p class="muted">No reports yet.</p>{% endfor %}</div></section>
+{% endblock %}
