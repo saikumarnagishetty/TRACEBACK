@@ -372,3 +372,38 @@ input,select,textarea{max-width:100%}
     object-position:center center!important;
   }
 }
+
+
+/* Mobile performance mode: static campus backdrop instead of decoding a full-screen video */
+@media(max-width:760px){
+  .video-background{
+    position:fixed!important;
+    inset:0!important;
+    width:100%!important;
+    height:100vh!important;
+    height:100svh!important;
+    z-index:0!important;
+    overflow:hidden!important;
+    background:#18291f url("/static/images/1748685721645.webp") center center/cover no-repeat!important;
+  }
+  .video-background video{display:none!important}
+  .video-background::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg,rgba(9,30,22,.42),rgba(10,31,23,.50))!important;
+  }
+  .hero,.section,.panel,.item-card,.stat-card,.site-header,.site-footer{
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+  }
+  .hero{animation:none!important}
+  .hero::before{animation:none!important}
+  .item-card{animation:none!important}
+  .reveal,.reveal.is-visible{
+    opacity:1!important;
+    transform:none!important;
+    transition:none!important;
+  }
+  .hero{transition:none!important}
+}
