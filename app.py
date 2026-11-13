@@ -47,10 +47,13 @@ app.config.update(
     ),
     SQLALCHEMY_TRACK_MODIFICATIONS=False,
     SQLALCHEMY_ENGINE_OPTIONS={
+        # Keep each local/Vercel worker's retained PostgreSQL connections low.
+        # Session Pooler has a small shared client limit; never allow overflow.
         "pool_pre_ping": True,
-        "pool_recycle": 180,
-        "pool_size": 2,
-        "max_overflow": 1,
+        "pool_recycle": 120,
+        "pool_size": 1,
+        "max_overflow": 0,
+        "pool_timeout": 10,
     },
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
