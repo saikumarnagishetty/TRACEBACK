@@ -3,6 +3,7 @@ from datetime import datetime
 import click
 from pathlib import Path
 
+from dotenv import load_dotenv
 from flask import Flask, abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import (
     LoginManager, UserMixin, current_user, login_required, login_user, logout_user
@@ -20,6 +21,7 @@ from wtforms import (
 from wtforms.validators import DataRequired, Email, Length, EqualTo, Optional, Regexp
 
 BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 CATEGORIES = [
     "Electronics", "ID cards & documents", "Bags", "Books & stationery",
