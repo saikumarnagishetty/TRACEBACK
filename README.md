@@ -1,6 +1,6 @@
 # TRACEBACK
 
-A minimal college lost-and-found management web application built with Python, Flask, and SQLite.
+A college lost-and-found management web application built with Python, Flask, and SQLAlchemy. It supports SQLite for local development and PostgreSQL for production.
 
 ## Features
 
@@ -16,7 +16,26 @@ A minimal college lost-and-found management web application built with Python, F
 - Private claim chat restricted to the report owner and claimant
 - Private Contact Admin help desk with support tickets, threaded replies, notifications, and admin resolution controls
 - Existing database files are upgraded safely without deleting user data
-- SQLite database initialized automatically
+- SQLite or PostgreSQL database initialized automatically based on DATABASE_URL
+- Safe CLI command to migrate existing SQLite records into an empty PostgreSQL database
+
+## Database configuration
+
+- If `DATABASE_URL` is not set, the app uses `instance/traceback.db` (SQLite).
+- To switch to PostgreSQL, set `DATABASE_URL` in your local `.env` file to your PostgreSQL connection string. The app loads `.env` automatically.
+- For production, set `DATABASE_URL` and `SECRET_KEY` as private environment variables in the hosting dashboard.
+
+### Migrate existing SQLite data to PostgreSQL
+
+1. Back up `instance/traceback.db` before starting.
+2. Set `DATABASE_URL` to your new, empty PostgreSQL database.
+3. Install the updated requirements and run:
+
+```bash
+flask --app app migrate-sqlite-to-postgres
+```
+
+The command copies all database tables and rows, preserves IDs, adjusts PostgreSQL ID sequences, and refuses to run if the target database already contains rows. It does not delete or modify the original SQLite file. Copy the separate `uploads/` folder as well if you need existing report photos.
 
 ## Run locally
 
@@ -55,7 +74,8 @@ The repository includes a Render Blueprint (render.yaml) for a free Python web s
 4. In the Render service's **Environment** settings, add:
    - DATABASE_URL: the Neon connection string (Render app converts PostgreSQL URLs to the psycopg 3 driver format).
    - SECRET_KEY: a long, random secret generated privately; never commit it to GitHub or share it in chat.
-5. Redeploy, then open the Render-provided *.onrender.com URL and test registration, login, reports, claims, admin, support chat, and notifications.
+5. If you need to preserve your existing local SQLite data, run the migration command from a trusted machine with the same Neon `DATABASE_URL` configured before opening the live site. Back up the SQLite file first; the migration requires an empty PostgreSQL database.
+6. Redeploy, then open the Render-provided *.onrender.com URL and test registration, login, reports, claims, admin, support chat, and notifications.
 
 ### Important free-tier limitations
 
