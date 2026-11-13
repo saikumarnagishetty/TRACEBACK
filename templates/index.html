@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <div class="eyebrow"><span class="live-dot"></span> YOUR CAMPUS, CONNECTED</div>
+  <h1>Lost something?<br><span>Let's bring it back.</span></h1>
+  <p class="hero-copy">A shared space for your college community to report lost items, return found belongings, and reconnect what matters.</p>
+  <div class="hero-actions">
+    {% if current_user.is_authenticated %}<a class="button primary" href="{{ url_for('new_item') }}">Create a report <span>↗</span></a>{% else %}<a class="button primary" href="{{ url_for('register') }}">Get started <span>↗</span></a>{% endif %}
+    <a class="button secondary" href="#reports">Explore reports</a>
+  </div>
+  <div class="hero-note"><span>✳</span> Built for students, by the campus community</div>
+</section>
+<section class="section" id="reports">
+  <div class="section-heading"><div><div class="eyebrow">THE COMMUNITY BOARD</div><h2>Recently reported</h2></div><span class="count-pill">{{ items|length }} open reports</span></div>
+  <form class="filters" method="get" action="{{ url_for('index') }}">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search item, detail or location…">
+    <select name="category"><option value="">All categories</option>{% for c in categories %}<option value="{{ c }}" {% if selected_category == c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select>
+    <select name="type"><option value="">Lost & found</option><option value="lost" {% if selected_type == 'lost' %}selected{% endif %}>Lost items</option><option value="found" {% if selected_type == 'found' %}selected{% endif %}>Found items</option></select>
+    <button class="button dark" type="submit">Search</button>
+  </form>
+  {% if items %}
+  <div class="item-grid">
+    {% for item in items %}
+    <a class="item-card" href="{{ url_for('item_detail', item_id=item.id) }}">
+      <div class="item-visual {% if item.report_type == 'lost' %}lost-visual{% else %}found-visual{% endif %}">
+        {% if item.image_filename %}<img src="{{ url_for('uploaded_file', filename=item.image_filename) }}" alt="{{ item.title }}">{% else %}<span class="visual-symbol">{% if item.category == 'Electronics' %}⌁{% elif item.category == 'Bags' %}▱{% elif item.category == 'Keys' %}⚿{% elif item.category == 'Books & stationery' %}▤{% else %}✳{% endif %}</span>{% endif %}
+        <span class="type-tag {{ item.report_type }}">{{ item.report_type }}</span>
+      </div>
+      <div class="item-card-body"><div class="card-meta">{{ item.category }} <span>·</span> {{ item.event_date.strftime('%d %b %Y') }}</div><h3>{{ item.title }}</h3><p>{{ item.description|truncate(100) }}</p><div class="card-location">⌖ {{ item.location }}</div><div class="card-author">Posted by {{ item.author.name }}</div></div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state"><div class="empty-icon">⌕</div><h3>No matching reports yet</h3><p>Try a different search, or be the first to add a report.</p>{% if current_user.is_authenticated %}<a class="button secondary" href="{{ url_for('new_item') }}">Post an item</a>{% endif %}</div>
+  {% endif %}
+</section>
+{% endblock %}
